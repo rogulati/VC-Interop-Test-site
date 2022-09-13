@@ -16,7 +16,8 @@
   "requestedCredentials": [
     {
       "type": "WorkplaceCredential",
-      "purpose": "So we can see that you are an expert",    
+      "purpose": "So we can see that you are an expert",
+      "acceptedIssuers": [ " " ],
       "configuration": {
         "validation": {
           "allowRevoked": true,

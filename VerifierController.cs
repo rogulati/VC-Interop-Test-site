@@ -87,10 +87,10 @@ namespace AspNetCoreVerifiableCredentials
                 //this means only that issuer should be trusted for the requested credentialtype
                 //this value is an array in the payload, you can trust multiple issuers for the same credentialtype
                 //very common to accept the test VCs and the Production VCs coming from different verifiable credential services
-                if (payload["requestedCredentials"][0]["acceptedIssuers"][0] != null)
-                {
-                    payload["requestedCredentials"][0]["acceptedIssuers"][0] = AppSettings.IssuerAuthority;
-                }                
+               //if (payload["requestedCredentials"][0]["acceptedIssuers"][0] != null)
+                //{
+                  //  payload["requestedCredentials"][0]["acceptedIssuers"][0] = AppSettings.IssuerAuthority;
+                //}                
 
                 //modify the callback method to make it easier to debug with tools like ngrok since the URI changes all the time
                 //this way you don't need to modify the callback URL in the payload every time ngrok changes the URI
