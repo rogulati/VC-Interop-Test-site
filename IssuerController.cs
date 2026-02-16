@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
@@ -57,18 +58,19 @@ namespace AspNetCoreVerifiableCredentials
                 string newpin = null;
 
                 string payloadpath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), ISSUANCEPAYLOAD);
-                _log.LogTrace("IssuanceRequest file: {0}", payloadpath);
+                _log.LogInformation("IssuanceRequest started. Loading payload from: {PayloadPath}", payloadpath);
                 if (!System.IO.File.Exists(payloadpath))
                 {
-                    _log.LogError("File not found: {0}", payloadpath);
+                    _log.LogError("Issuance payload file not found: {PayloadPath}", payloadpath);
                     return BadRequest(new { error = "400", error_description = ISSUANCEPAYLOAD + " not found" });
                 }
                 jsonString = System.IO.File.ReadAllText(payloadpath);
                 if (string.IsNullOrEmpty(jsonString))
                 {
-                    _log.LogError("Error reading file: {0}", payloadpath);
+                    _log.LogError("Issuance payload file is empty: {PayloadPath}", payloadpath);
                     return BadRequest(new { error = "400", error_description = ISSUANCEPAYLOAD + " error reading file" });
                 }
+                _log.LogDebug("Issuance payload loaded successfully, length: {Length} bytes", jsonString.Length);
 
                 //check if pin is required, if found make sure we set a new random pin
                 //pincode is only used when the payload contains claim value pairs which results in an IDTokenhint
@@ -77,14 +79,14 @@ namespace AspNetCoreVerifiableCredentials
                 {
                     if (IsMobile())
                     {
-                        _log.LogTrace("pin element found in JSON payload, but on mobile so remove pin since we will be using deeplinking");
+                        _log.LogInformation("PIN element found in payload, but on mobile - removing PIN for deep linking");
                         //consider providing the PIN through other means to your user instead of removing it.
                         payload["pin"].Parent.Remove();
 
                     }
                     else
                     {
-                        _log.LogTrace("pin element found in JSON payload, modifying to a random number of the specific length");
+                        _log.LogInformation("PIN element found in payload, generating random PIN");
                         var length = (int)payload["pin"]["length"];
                         var pinMaxValue = (int)Math.Pow(10, length) - 1;
                         var randomNumber = RandomNumberGenerator.GetInt32(1, pinMaxValue);
@@ -155,12 +157,14 @@ namespace AspNetCoreVerifiableCredentials
                 {
                     //The VC Request API is an authenticated API. We need to clientid and secret (or certificate) to create an access token which 
                     //needs to be send as bearer to the VC Request API
+                    _log.LogInformation("Acquiring access token for VC Request API...");
                     var accessToken = await GetAccessToken();
                     if (accessToken.Item1 == String.Empty)
                     {
-                        _log.LogError(String.Format("failed to acquire accesstoken: {0} : {1}", accessToken.error, accessToken.error_description));
+                        _log.LogError("Failed to acquire access token. Error: {Error}, Description: {Description}", accessToken.error, accessToken.error_description);
                         return BadRequest(new { error = accessToken.error, error_description = accessToken.error_description });
                     }
+                    _log.LogInformation("Access token acquired successfully");
 
                     var client = _httpClientFactory.CreateClient();
                     var defaultRequestHeaders = client.DefaultRequestHeaders;
@@ -170,9 +174,11 @@ namespace AspNetCoreVerifiableCredentials
                     response = await res.Content.ReadAsStringAsync();
                     statusCode = res.StatusCode;
 
+                    _log.LogDebug("VC Request API responded with status: {StatusCode}", statusCode);
+
                     if (statusCode == HttpStatusCode.Created)
                     {
-                        _log.LogTrace("succesfully called Request API");
+                        _log.LogInformation("Issuance request created successfully. State: {State}", state);
                         JObject requestConfig = JObject.Parse(response);
                         if (newpin != null) { requestConfig["pin"] = newpin; }
                         requestConfig.Add(new JProperty("id", state));
@@ -192,7 +198,7 @@ namespace AspNetCoreVerifiableCredentials
                     }
                     else
                     {
-                        _log.LogError("Unsuccesfully called Request API" + response);
+                        _log.LogError("VC Request API call failed. Status: {StatusCode}, Response: {Response}", statusCode, response);
                         return BadRequest(new { error = "400", error_description = "Something went wrong calling the API: " + response });
                     }
 
@@ -218,23 +224,27 @@ namespace AspNetCoreVerifiableCredentials
             try
             {
                 string content = await new System.IO.StreamReader(this.Request.Body).ReadToEndAsync();
-                _log.LogTrace("callback!: " + content);
+                _log.LogInformation("IssuanceCallback received. Content length: {Length}", content.Length);
+                _log.LogDebug("IssuanceCallback body: {Content}", content);
                 this.Request.Headers.TryGetValue("api-key", out var apiKey);
                 if (this._apiKey != apiKey)
                 {
-                    _log.LogTrace("api-key wrong or missing");
+                    _log.LogWarning("IssuanceCallback rejected: api-key wrong or missing");
                     return new ContentResult() { StatusCode = (int)HttpStatusCode.Unauthorized, Content = "api-key wrong or missing" };
                 }
                 JObject issuanceResponse = JObject.Parse(content);
                 var state = issuanceResponse["state"].ToString();
+                var requestStatus = issuanceResponse["requestStatus"].ToString();
+                _log.LogInformation("IssuanceCallback - State: {State}, Status: {RequestStatus}", state, requestStatus);
 
                 //there are 2 different callbacks. 1 if the QR code is scanned (or deeplink has been followed)
                 //Scanning the QR code makes Authenticator download the specific request from the server
                 //the request will be deleted from the server immediately.
                 //That's why it is so important to capture this callback and relay this to the UI so the UI can hide
                 //the QR code to prevent the user from scanning it twice (resulting in an error since the request is already deleted)
-                if (issuanceResponse["requestStatus"].ToString() == "request_retrieved")
+                if (requestStatus == "request_retrieved")
                 {
+                    _log.LogInformation("QR code scanned for issuance. State: {State}", state);
                     var cacheData = new
                     {
                         status = "request_retrieved",
@@ -246,8 +256,9 @@ namespace AspNetCoreVerifiableCredentials
                 //
                 //This callback is called when issuance is completed.
                 //
-                if (issuanceResponse["requestStatus"].ToString() == "issuance_successful")
+                if (requestStatus == "issuance_successful")
                 {
+                    _log.LogInformation("Credential issued successfully. State: {State}", state);
                     var cacheData = new
                     {
                         status = "issuance_successful",
@@ -258,8 +269,10 @@ namespace AspNetCoreVerifiableCredentials
                 //
                 //We capture if something goes wrong during issuance. See documentation with the different error codes
                 //
-                if (issuanceResponse["requestStatus"].ToString() == "issuance_error")
+                if (requestStatus == "issuance_error")
                 {
+                    _log.LogError("Issuance error for state: {State}. Code: {ErrorCode}, Message: {ErrorMessage}",
+                        state, issuanceResponse["error"]["code"], issuanceResponse["error"]["message"]);
                     var cacheData = new
                     {
                         status = "issuance_error",
@@ -373,7 +386,7 @@ namespace AspNetCoreVerifiableCredentials
                 //return BadRequest(new { error = "500", error_description = "Something went wrong getting an access token for the client API:" + ex.Message });
             }
 
-            _log.LogTrace(result.AccessToken);
+            _log.LogDebug("Access token acquired. Expires on: {ExpiresOn}", result.ExpiresOn);
             return (result.AccessToken, String.Empty, String.Empty);
         }
         protected string GetRequestHostName()

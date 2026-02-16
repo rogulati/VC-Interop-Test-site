@@ -1,16 +1,29 @@
 ﻿@page
 @model AspNetCoreVerifiableCredentials.Pages.IssuerModel
 @{
-    ViewData["Title"] = "Issuer";
+    ViewData["Title"] = "Issue Credential";
 }
-            <div style="text-align: center;">
-                <img src="MS.png" height=50px; />
-                <h1>Verifiable Credential Issuance</h1>
-                <h2> Workplace Credential VCTYPE = WorkplaceCredential</h2>
-        
-            <button type="button" id="sign-in" class="button">GET CREDENTIAL</button>
-            <div id="errorMessage"></div>
-            <br />
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-file-earmark-plus me-2"></i>Issue Credential</h4>
+    <a href="/" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Home
+    </a>
+</div>
+
+<!-- Issuance Card -->
+<div class="card section-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-badge me-2"></i>Verifiable Credential Issuance</span>
+        <span class="badge bg-light text-dark">WoodgroveTraining</span>
+    </div>
+    <div class="card-body text-center">
+
+            <button type="button" id="sign-in" class="btn btn-primary btn-lg mb-3">
+                <i class="bi bi-qr-code me-2"></i>GET CREDENTIAL
+            </button>
+            <div id="errorMessage" class="text-danger mt-2"></div>
             <div id="qrText"  style="display:none;">
                 <p class="small-text">
                     <img src="authenticator-icon.png" alt="Authenticator icon" class="icon-small"><br>
@@ -99,5 +112,6 @@ signIn.addEventListener('click', () => {
         }).catch(error => { console.log(error.message); document.getElementById("errorMessage").innerHTML += error.message; })
 });                
             </script>
-            </div>
+    </div>
+</div>
 

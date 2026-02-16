@@ -16,14 +16,17 @@
   "requestedCredentials": [
     {
       "type": "VerifiableCredential",
-      "purpose": "So we can see that you are an expert",    
+      "purpose": "So we can see that you are an expert",
       "configuration": {
         "validation": {
           "allowRevoked": true,
-          "validateLinkedDomain": false
+          "validateLinkedDomain": false,
+          "faceCheck": {
+            "sourcePhotoClaimName": "photo",
+            "matchConfidenceThreshold": 70
+          }
         }
       }
     }
   ]
 }
- 

@@ -1,14 +1,34 @@
 ﻿@page
 @model AspNetCoreVerifiableCredentials.Pages.VerifierModel
 @{
-    ViewData["Title"] = "Verifier";
+    ViewData["Title"] = "Verify Credential";
 }
-           <div style="text-align: center;">
-                <img src="MS.png" height=50px; />
-                <h1>Verifiable Credential Verification</h1>
-                <h2> Workplace Credential VCTYPE = WorkplaceCredential</h2>
-        
-            <button type="button" id="sign-in" class="button">VERIFY CREDENTIAL</button>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-patch-check me-2"></i>Verify Credential</h4>
+    <a href="/" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Back to Home
+    </a>
+</div>
+
+<!-- Verification Card -->
+<div class="card section-card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-badge me-2"></i>Verifiable Credential Verification</span>
+        <span class="badge bg-light text-dark">VerifiableCredential</span>
+    </div>
+    <div class="card-body text-center">
+
+            <button type="button" id="sign-in" class="btn btn-primary btn-lg mb-3">
+                <i class="bi bi-qr-code me-2"></i>VERIFY CREDENTIAL
+            </button>
+            <div id="facecheck-wrapper" class="mb-3">
+                <div class="form-check d-inline-flex align-items-center gap-2">
+                    <input type="checkbox" class="form-check-input" id="facecheck" />
+                    <label class="form-check-label" for="facecheck">FaceCheck required</label>
+                </div>
+            </div>
             <div id="qrText"  style="display:none;">
                 <p class="small-text">
                     <img src="authenticator-icon.png" alt="Authenticator icon" class="icon-small"><br>
@@ -22,9 +42,7 @@
             <div id="message-wrapper" class="margin-bottom-75 margin-top-75" style="display: none">
                <i class="fas fa-user-check green icon-text-large margin-bottom-25"></i>
                <div id="message"></div>
-                <br />
                <div id="subject"></div>
-                <br />
                <div id="payload"></div>
             </div>
 
@@ -37,7 +55,8 @@
                 var respPresentationReq = null;
 
                 signIn.addEventListener('click', () => {
-                    fetch('/api/verifier/presentation-request')
+                    var useFaceCheck = document.getElementById('facecheck').checked;
+                    fetch('/api/verifier/presentation-request?faceCheck=' + useFaceCheck)
                     .then(function(response) {
                         response.text()
                         .catch(error => document.getElementById("message").innerHTML = error)
@@ -45,15 +64,18 @@
                             respPresentationReq = JSON.parse(message);
                             if( /Android/i.test(navigator.userAgent) ) {
                                 console.log(`Android device! Using deep link (${respPresentationReq.url}).`);
+                                document.getElementById('facecheck-wrapper').style.display = "none";
                                 window.location.href = respPresentationReq.url; setTimeout(function () {
                                 window.location.href = "https://play.google.com/store/apps/details?id=com.azure.authenticator"; }, 2000);
                             } else if (/iPhone/i.test(navigator.userAgent)) {
                                 console.log(`iOS device! Using deep link (${respPresentationReq.url}).`);
+                                document.getElementById('facecheck-wrapper').style.display = "none";
                                 window.location.replace(respPresentationReq.url);
                             } else {
                                 console.log(`Not Android or IOS. Generating QR code encoded with ${message}`);
                                 qrcode.makeCode(respPresentationReq.url);
                                 document.getElementById('sign-in').style.visibility = "hidden";
+                                document.getElementById('facecheck-wrapper').style.display = "none";
                                 document.getElementById('qrText').style.display = "block";
                             }
                         }).catch(error => { console.log(error.message); })
@@ -77,9 +99,87 @@
                                     }
                                     
                                     if (respMsg.status == 'presentation_verified') {
-                                        document.getElementById('message').innerHTML = respMsg.message;
-                                        document.getElementById('payload').innerHTML = "Payload: " + JSON.stringify(respMsg.payload);
-                                        document.getElementById('subject').innerHTML = respMsg.givenName +" " + respMsg.surname +" has successfully presented the Verifiable Credential";
+                                        document.getElementById('message').innerHTML = '';
+                                        document.getElementById('subject').innerHTML = "Verified ID was successfully presented";
+
+                                        // Build a table from the VC claims
+                                        var html = '';
+                                        var payload = respMsg.payload;
+                                        if (typeof payload === 'string') {
+                                            try { payload = JSON.parse(payload); } catch(e) {}
+                                        }
+                                        if (Array.isArray(payload)) {
+                                            payload.forEach(function(vc, idx) {
+                                                html += '<table class="vc-table">';
+                                                if (vc.type && vc.type.length > 0) {
+                                                    html += '<tr><th colspan="2">Credential: ' + vc.type.join(', ') + '</th></tr>';
+                                                } else {
+                                                    html += '<tr><th colspan="2">Credential #' + (idx+1) + '</th></tr>';
+                                                }
+                                                if (vc.issuer) {
+                                                    html += '<tr><td><strong>Issuer</strong></td><td style="word-break:break-all">' + vc.issuer + '</td></tr>';
+                                                }
+                                                if (vc.claims) {
+                                                    for (var key in vc.claims) {
+                                                        var val = vc.claims[key];
+                                                        if (key.toLowerCase() === 'photo' && typeof val === 'string' && val.length > 100) {
+                                                            // Convert base64url to standard base64
+                                                            var b64 = val.replace(/-/g, '+').replace(/_/g, '/');
+                                                            // Pad if needed
+                                                            while (b64.length % 4 !== 0) { b64 += '='; }
+                                                            html += '<tr><td><strong>' + key + '</strong></td><td><img src="data:image/jpeg;base64,' + b64 + '" alt="Photo" style="max-width:200px;max-height:200px;border-radius:8px;" /></td></tr>';
+                                                        } else {
+                                                            html += '<tr><td><strong>' + key + '</strong></td><td>' + val + '</td></tr>';
+                                                        }
+                                                    }
+                                                }
+                                                if (vc.expirationDate) {
+                                                    html += '<tr><td><strong>Expiration</strong></td><td>' + vc.expirationDate + '</td></tr>';
+                                                }
+                                                if (vc.issuanceDate) {
+                                                    html += '<tr><td><strong>Issued</strong></td><td>' + vc.issuanceDate + '</td></tr>';
+                                                }
+                                                html += '</table>';
+                                            });
+                                        } else if (typeof payload === 'object' && payload !== null) {
+                                            html += '<table class="vc-table">';
+                                            html += '<tr><th>Claim</th><th>Value</th></tr>';
+                                            for (var key in payload) {
+                                                html += '<tr><td><strong>' + key + '</strong></td><td>' + JSON.stringify(payload[key]) + '</td></tr>';
+                                            }
+                                            html += '</table>';
+                                        } else {
+                                            html = '<pre>' + JSON.stringify(respMsg.payload, null, 2) + '</pre>';
+                                        }
+                                        document.getElementById('payload').innerHTML = html;
+
+                                        // Display FaceCheck results if present
+                                        if (respMsg.faceCheckResults) {
+                                            var fcResults = respMsg.faceCheckResults;
+                                            if (typeof fcResults === 'string') {
+                                                try { fcResults = JSON.parse(fcResults); } catch(e) {}
+                                            }
+                                            if (Array.isArray(fcResults) && fcResults.length > 0) {
+                                                var fcHtml = '<div class="facecheck-section">';
+                                                fcHtml += '<table class="vc-table">';
+                                                fcHtml += '<tr><th colspan="2">FaceCheck Results</th></tr>';
+                                                fcResults.forEach(function(fc) {
+                                                    var score = fc.matchConfidenceScore;
+                                                    var scoreClass = score >= 80 ? 'facecheck-high' : (score >= 60 ? 'facecheck-medium' : 'facecheck-low');
+                                                    fcHtml += '<tr><td><strong>Match Confidence Score</strong></td><td><span class="facecheck-score ' + scoreClass + '">' + score.toFixed(2) + '%</span></td></tr>';
+                                                    if (fc.sourcePhotoQuality) {
+                                                        fcHtml += '<tr><td><strong>Source Photo Quality</strong></td><td>' + fc.sourcePhotoQuality + '</td></tr>';
+                                                    }
+                                                    if (fc.credentialType) {
+                                                        fcHtml += '<tr><td><strong>Credential Type</strong></td><td>' + fc.credentialType + '</td></tr>';
+                                                    }
+                                                });
+                                                fcHtml += '</table>';
+                                                fcHtml += '</div>';
+                                                document.getElementById('payload').innerHTML += fcHtml;
+                                            }
+                                        }
+
                                         clearInterval(checkStatus);
                                     }
 
@@ -88,5 +188,6 @@
                     }, 1500); //change this to higher interval if you use ngrok to prevent overloading the free tier service
                 })
             </script>
-            </div>
+    </div>
+</div>
 

@@ -1,94 +1,237 @@
-body {
-    font-family: sans-serif;
-    background-color: #E0E0E0;
-}
-#wrap {
-    margin: 0 auto;
-    width: 800px;
+/* =============================================
+   Entra Verified ID Admin Dashboard Theme
+   Matching: rogulati/entra-verifiedid-admin-dashboard
+   ============================================= */
+
+:root {
+    --primary-color: #0078d4;
+    --secondary-color: #106ebe;
+    --success-color: #107c10;
+    --warning-color: #ffb900;
+    --danger-color: #d13438;
+    --dark-color: #201f1e;
+    --light-color: #f3f2f1;
 }
 
+body {
+    background-color: #faf9f8;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar - gradient matching dashboard */
+.navbar-brand {
+    font-weight: 600;
+}
+
+.navbar {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+}
+
+/* Cards */
+.card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 8px 8px 0 0 !important;
+    font-weight: 600;
+}
+
+.section-card {
+    margin-bottom: 24px;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Legacy .button class for existing pages */
 .button {
-    background-color: #3B2E58;
+    background-color: var(--primary-color);
     border: none;
     color: white;
-    padding: 15px 32px;
+    padding: 10px 24px;
     text-align: center;
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: 4px;
     display: inline-block;
-    font-size: 16px;
-    font-weight: bold;
-  }
-
-.dark-purple-fill {
-  background-color: #3B2E58;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    font-family: inherit;
 }
-.light-purple-fill {
-  background-color: #8661c5;
-}
-
-.icon-small {
-  width: 50px;
-  padding-bottom: 5px;
+.button:hover {
+    background-color: var(--secondary-color);
 }
 
-.icon-text-large {
-  font-size: 100px;
+/* Status badges - matching dashboard */
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
 }
 
-.small-text {
-  font-size: 16px;
+.status-enabled {
+    background-color: #dff6dd;
+    color: var(--success-color);
 }
 
-.tiny-text {
-  font-size: 12px;
+.status-valid {
+    background-color: #dff6dd;
+    color: var(--success-color);
 }
 
-.text-gray {
-  color: gray;
+.status-revoked {
+    background-color: #fde7e9;
+    color: var(--danger-color);
 }
 
-.text-center {
-  text-align: center;
+.status-published {
+    background-color: #deecf9;
+    color: var(--primary-color);
 }
 
+/* Info label/value - matching dashboard */
+.info-label {
+    color: #605e5c;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.info-value {
+    font-weight: 600;
+    word-break: break-all;
+}
+
+/* Table hover - matching dashboard */
+.table-hover tbody tr:hover {
+    background-color: #f3f2f1;
+}
+
+/* Modal - matching dashboard */
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
+.modal-header .btn-close {
+    filter: invert(1);
+}
+
+/* Footer - matching dashboard */
+footer {
+    background-color: var(--dark-color);
+    color: white;
+    padding: 20px 0;
+    margin-top: 40px;
+}
+
+/* Home page action cards */
+.home-action-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: 8px;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+.home-action-card:hover {
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+    color: inherit;
+    text-decoration: none;
+}
+.home-action-card .card-body {
+    padding: 28px 24px;
+    text-align: center;
+}
+
+/* QR code */
 #qrcode > img {
-  margin: 0 auto;
-  padding-top: 25px;
+    margin: 0 auto;
+    padding-top: 16px;
 }
 
-.margin-top-50 {
-  margin-top: 50px;
+/* Icon utilities */
+.icon-small {
+    width: 40px;
+    padding-bottom: 4px;
 }
 
-.margin-top-75 {
-  margin-top: 75px;
+/* Text utilities */
+.small-text {
+    font-size: 14px;
+    color: #605e5c;
 }
 
-.margin-bottom-25 {
-  margin-bottom: 25px;
-}
+.green { color: var(--success-color); }
 
-.margin-bottom-50 {
-  margin-bottom: 50px;
-}
-
-.margin-bottom-75 {
-  margin-bottom: 50px;
-}
-
-.margin-bottom-100 {
-  margin-bottom: 100px;
-}
-
-.green {
-  color: #228B22;
-}
-
+/* Message displays */
 #message {
-  font-size: 1.5em;
+    font-size: 1.1em;
+    color: #242424;
 }
 
 #subject {
-    font-size: 1.5em;
+    font-size: 1.1em;
+    color: var(--success-color);
+    font-weight: 600;
 }
+
+/* VC Tables - matching dashboard table style */
+.vc-table {
+    border-collapse: collapse;
+    margin: 12px auto;
+    min-width: 380px;
+    font-size: 0.85rem;
+    width: 100%;
+    max-width: 600px;
+}
+.vc-table th, .vc-table td {
+    border: none;
+    border-bottom: 1px solid #edebe9;
+    padding: 8px 12px;
+    text-align: left;
+}
+.vc-table th {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.vc-table tr:hover {
+    background-color: #f3f2f1;
+}
+
+/* FaceCheck styling */
+.facecheck-section { margin-top: 12px; }
+.facecheck-score { font-size: 1.1em; font-weight: bold; }
+.facecheck-high { color: var(--success-color); }
+.facecheck-medium { color: var(--warning-color); }
+.facecheck-low { color: var(--danger-color); }
+
+/* Checkbox */
+.form-check-input:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* Margins */
+.margin-top-50 { margin-top: 50px; }
+.margin-top-75 { margin-top: 75px; }
+.margin-bottom-25 { margin-bottom: 25px; }
+.margin-bottom-75 { margin-bottom: 50px; }
