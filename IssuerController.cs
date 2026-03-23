@@ -131,7 +131,7 @@ namespace AspNetCoreVerifiableCredentials
                     string host = GetRequestHostName();
                     if (!host.Contains("//localhost"))
                     {
-                        payload["callback"]["url"] = String.Format("{0}:/api/issuer/issuanceCallback", host);
+                        payload["callback"]["url"] = String.Format("{0}/api/issuer/issuanceCallback", host);
                     }
                 }
 
