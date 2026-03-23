@@ -82,7 +82,7 @@
                     }).catch(error => { console.log(error.message); })
 
                     var checkStatus = setInterval(function () {
-                        fetch('api/verifier/presentation-response?id=' + respPresentationReq.id )
+                        fetch('/api/verifier/presentation-response?id=' + respPresentationReq.id )
                             .then(response => response.text())
                             .catch(error => document.getElementById("message").innerHTML = error)
                             .then(response => {
@@ -101,6 +101,27 @@
                                     if (respMsg.status == 'presentation_verified') {
                                         document.getElementById('message').innerHTML = '';
                                         document.getElementById('subject').innerHTML = "Verified ID was successfully presented";
+
+                                        // Friendly label mapping for claim names
+                                        var claimLabels = {
+                                            'firstName': 'First Name',
+                                            'lastName': 'Last Name',
+                                            'scanneddoc': 'Document Type',
+                                            'verification': 'Document Expiry',
+                                            'address': 'Address',
+                                            'ageverified': 'Date of Birth',
+                                            'gender': 'Gender',
+                                            'nationality': 'Nationality',
+                                            'documentNumber': 'Document Number',
+                                            'photo': 'Photo',
+                                            'givenName': 'Given Name',
+                                            'surname': 'Surname',
+                                            'email': 'Email',
+                                            'displayName': 'Display Name'
+                                        };
+                                        function getClaimLabel(key) {
+                                            return claimLabels[key] || key;
+                                        }
 
                                         // Build a table from the VC claims
                                         var html = '';
@@ -122,14 +143,15 @@
                                                 if (vc.claims) {
                                                     for (var key in vc.claims) {
                                                         var val = vc.claims[key];
+                                                        var label = getClaimLabel(key);
                                                         if (key.toLowerCase() === 'photo' && typeof val === 'string' && val.length > 100) {
                                                             // Convert base64url to standard base64
                                                             var b64 = val.replace(/-/g, '+').replace(/_/g, '/');
                                                             // Pad if needed
                                                             while (b64.length % 4 !== 0) { b64 += '='; }
-                                                            html += '<tr><td><strong>' + key + '</strong></td><td><img src="data:image/jpeg;base64,' + b64 + '" alt="Photo" style="max-width:200px;max-height:200px;border-radius:8px;" /></td></tr>';
+                                                            html += '<tr><td><strong>' + label + '</strong></td><td><img src="data:image/jpeg;base64,' + b64 + '" alt="Photo" style="max-width:200px;max-height:200px;border-radius:8px;" /></td></tr>';
                                                         } else {
-                                                            html += '<tr><td><strong>' + key + '</strong></td><td>' + val + '</td></tr>';
+                                                            html += '<tr><td><strong>' + label + '</strong></td><td>' + val + '</td></tr>';
                                                         }
                                                     }
                                                 }
