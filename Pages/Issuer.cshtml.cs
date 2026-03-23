@@ -9,8 +9,12 @@ namespace AspNetCoreVerifiableCredentials.Pages
 {
     public class IssuerModel : PageModel
     {
-        public void OnGet()
+        [BindProperty(SupportsGet = true)]
+        public string VcType { get; set; }
+
+        public void OnGet(string vctype)
         {
+            VcType = vctype ?? "";
         }
     }
 }

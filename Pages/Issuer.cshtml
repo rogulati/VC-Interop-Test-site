@@ -1,7 +1,8 @@
-﻿@page
+﻿@page "{vctype?}"
 @model AspNetCoreVerifiableCredentials.Pages.IssuerModel
 @{
     ViewData["Title"] = "Issue Credential";
+    var preselect = Model.VcType;
 }
 
 <!-- Page Header -->
@@ -16,17 +17,144 @@
 <div class="card section-card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-person-badge me-2"></i>Verifiable Credential Issuance</span>
-        <span class="badge bg-light text-dark">WoodgroveTraining</span>
+        <select id="vcTypeSelect" class="form-select form-select-sm w-auto bg-white" onchange="onVcTypeChanged()" style="max-width:200px;">
+            @if (preselect == "vid")
+            {
+                <option value="WoodgroveTraining">WoodgroveTraining</option>
+                <option value="VerifiedIdentity" selected>VerifiedIdentity</option>
+            }
+            else
+            {
+                <option value="WoodgroveTraining" selected>WoodgroveTraining</option>
+                <option value="VerifiedIdentity">VerifiedIdentity</option>
+            }
+        </select>
     </div>
     <div class="card-body text-center">
 
-            <button type="button" id="sign-in" class="btn btn-primary btn-lg mb-3">
-                <i class="bi bi-qr-code me-2"></i>GET CREDENTIAL
-            </button>
+            <!-- Token Details Banner (shown when tokenId query param is present) -->
+            <div id="tokenDetailsCard" style="display:none;" class="mb-3">
+                <div class="card border-info mx-auto" style="max-width:750px;">
+                    <div class="card-header bg-info text-white d-flex justify-content-between align-items-center py-2">
+                        <span><i class="bi bi-info-circle me-2"></i>Issuance Token Details</span>
+                        <span id="tokenIdBadge" class="badge bg-light text-dark small"></span>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="tokenDetailsLoading" class="text-muted"><i class="bi bi-hourglass-split me-1"></i>Loading token details...</div>
+                        <div id="tokenDetailsError" style="display:none;" class="text-danger"></div>
+                        <table id="tokenDetailsTable" class="table table-sm table-bordered text-start mb-0" style="display:none;font-size:0.85rem;">
+                            <tbody id="tokenDetailsBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WoodgroveTraining section -->
+            <div id="woodgroveSection">
+                <button type="button" id="sign-in" class="btn btn-primary btn-lg mb-3">
+                    <i class="bi bi-qr-code me-2"></i>GET CREDENTIAL
+                </button>
+            </div>
+
+            <!-- VerifiedIdentity section -->
+            <div id="verifiedIdentitySection" style="display:none;">
+                <p class="text-muted mb-3">
+                    Fill in the claims below. Use the <strong>Take Selfie</strong> or <strong>Upload Photo</strong>
+                    button to provide a photo, then click <strong>Issue Credential</strong>.
+                </p>
+                <table class="table table-bordered text-start mx-auto" style="max-width: 750px;">
+                    <thead class="table-dark">
+                        <tr>
+                            <th style="width:30%">Claims</th>
+                            <th>Value</th>
+                            <th style="width:120px">Photo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>First Name</strong></td>
+                            <td><input type="text" id="claimFirstName" class="form-control form-control-sm" placeholder="first name"></td>
+                            <td rowspan="10" class="text-center align-middle">
+                                <img id="photoPreview" src="" alt="Photo preview" style="max-width:100px;max-height:120px;display:none;" class="mb-2 border rounded" />
+                                <div id="photoPlaceholder" class="text-muted small">No photo</div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Last Name</strong></td>
+                            <td><input type="text" id="claimLastName" class="form-control form-control-sm" placeholder="last name"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Gender</strong></td>
+                            <td><input type="text" id="claimGender" class="form-control form-control-sm" placeholder="M/F"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nationality</strong></td>
+                            <td><input type="text" id="claimNationality" class="form-control form-control-sm" placeholder="ISO 3166-1 alpha-3, like USA, GBR, IRL"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Document Number</strong></td>
+                            <td><input type="text" id="claimDocumentNumber" class="form-control form-control-sm" placeholder="Passport or ID number"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Address</strong></td>
+                            <td><input type="text" id="claimAddress" class="form-control form-control-sm" placeholder="full address"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Date of Birth</strong></td>
+                            <td><input type="date" id="claimAgeVerified" class="form-control form-control-sm"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Document Expiry</strong></td>
+                            <td><input type="date" id="claimVerification" class="form-control form-control-sm"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Document Type</strong></td>
+                            <td><input type="text" id="claimScannedDoc" class="form-control form-control-sm" placeholder="e.g. Passport, ID Card"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Photo</strong></td>
+                            <td class="text-muted small"><em>Captured via Take Selfie or Upload Photo below (JPEG, URL-encoded)</em></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="mb-3">
+                    <button type="button" id="btnTakeSelfie" class="btn btn-secondary me-2">
+                        <i class="bi bi-camera me-1"></i>Take Selfie
+                    </button>
+                    <button type="button" id="btnUploadPhoto" class="btn btn-secondary">
+                        <i class="bi bi-upload me-1"></i>Upload Photo
+                    </button>
+                    <input type="file" id="photoFileInput" accept="image/*" style="display:none;" />
+                </div>
+
+                <!-- Selfie camera modal -->
+                <div id="selfieContainer" style="display:none;" class="mb-3">
+                    <div class="card mx-auto" style="max-width:400px;">
+                        <div class="card-body text-center">
+                            <video id="selfieVideo" autoplay playsinline style="width:100%;max-width:360px;border-radius:8px;" class="mb-2"></video>
+                            <canvas id="selfieCanvas" style="display:none;"></canvas>
+                            <div>
+                                <button type="button" id="btnCapture" class="btn btn-primary btn-sm me-2">
+                                    <i class="bi bi-camera-fill me-1"></i>Capture
+                                </button>
+                                <button type="button" id="btnCancelSelfie" class="btn btn-outline-secondary btn-sm">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="btnIssueCredential" class="btn btn-primary btn-lg mb-3">
+                    <i class="bi bi-qr-code me-2"></i>Issue Credential
+                </button>
+            </div>
+
             <div id="errorMessage" class="text-danger mt-2"></div>
-            <div id="qrText"  style="display:none;">
+            <div id="qrText" style="display:none;">
                 <p class="small-text">
-                    <img src="authenticator-icon.png" alt="Authenticator icon" class="icon-small"><br>
+                    <img src="/authenticator-icon.png" alt="Authenticator icon" class="icon-small"><br>
                     Scan with Microsoft Authenticator or any JWT VC profile compliant Digital Wallet
                 </p>
             </div>
@@ -41,76 +169,290 @@
                <div id="payload"></div>
             </div>
 
-            <script src="qrcode.min.js"></script>
+            <script src="/qrcode.min.js"></script>
             <script>
                 var signIn = document.getElementById('sign-in');
-                var signOut = document.getElementById('sign-out');
-                var display = document.getElementById('display');
                 var qrcode = new QRCode("qrcode", { width: 300, height: 300 });
                 var respIssuanceReq = null;
+                var photoBase64 = '';  // base64 JPEG from camera or file upload
+                var selfieStream = null;
 
-signIn.addEventListener('click', () => {
-    fetch('/api/issuer/issuance-request')
-        .then(response => response.text())
-        //.catch(error => { console.log(error.message); document.getElementById("errorMessage").innerHTML += error.message; })
-        .then(function(message) {
-            respIssuanceReq = JSON.parse(message);
-            if (/Android/i.test(navigator.userAgent)) {
-                console.log(`Android device! Using deep link (${respIssuanceReq.url}).`);
-                window.location.href = respIssuanceReq.url; setTimeout(function() {
-                    window.location.href = "https://play.google.com/store/apps/details?id=com.azure.authenticator";
-                }, 2000);
-            } else if (/iPhone/i.test(navigator.userAgent)) {
-                console.log(`iOS device! Using deep link (${respIssuanceReq.url}).`);
-                window.location.replace(respIssuanceReq.url);
-            } else {
-                console.log(`Not Android or IOS. Generating QR code encoded with ${message}`);
-                qrcode.makeCode(respIssuanceReq.url);
-                document.getElementById('sign-in').style.display = "none";
-                document.getElementById('qrText').style.display = "block";
-                if (respIssuanceReq.pin) {
-                    document.getElementById('pinCodeText').innerHTML = "Pin code: " + respIssuanceReq.pin;
-                    document.getElementById('pinCodeText').style.display = "block";
+                // ---- On page load: apply preselection from route ----
+                (function() {
+                    var select = document.getElementById('vcTypeSelect');
+                    if (select.value === 'VerifiedIdentity') {
+                        onVcTypeChanged();
+                    }
+
+                    // ---- Fetch token details if tokenId is present ----
+                    var urlParams = new URLSearchParams(window.location.search);
+                    var tokenId = urlParams.get('tokenId');
+                    if (tokenId) {
+                        document.getElementById('tokenDetailsCard').style.display = '';
+                        document.getElementById('tokenIdBadge').textContent = tokenId;
+                        fetch('/api/issuer/token-details?tokenId=' + encodeURIComponent(tokenId))
+                            .then(function(r) { return r.text(); })
+                            .then(function(text) {
+                                var data = JSON.parse(text);
+                                if (data.error) {
+                                    document.getElementById('tokenDetailsLoading').style.display = 'none';
+                                    document.getElementById('tokenDetailsError').style.display = '';
+                                    document.getElementById('tokenDetailsError').textContent = data.error_description || data.error;
+                                    return;
+                                }
+                                document.getElementById('tokenDetailsLoading').style.display = 'none';
+                                document.getElementById('tokenDetailsTable').style.display = '';
+                                var tbody = document.getElementById('tokenDetailsBody');
+                                var fields = [
+                                    { label: 'Name', key: 'name' },
+                                    { label: 'Language', key: 'language' },
+                                    { label: 'Offering ID', key: 'offeringId' },
+                                    { label: 'Subscription ID', key: 'subscriptionId' },
+                                    { label: 'Tenant ID', key: 'tenantId' },
+                                    { label: 'Help Link', key: 'helpLink' },
+                                    { label: 'Redirect URI', key: 'redirectUri' }
+                                ];
+                                fields.forEach(function(f) {
+                                    if (data[f.key] !== undefined) {
+                                        var tr = document.createElement('tr');
+                                        var tdLabel = document.createElement('td');
+                                        tdLabel.style.width = '35%';
+                                        tdLabel.style.fontWeight = '600';
+                                        tdLabel.textContent = f.label;
+                                        var tdValue = document.createElement('td');
+                                        tdValue.textContent = data[f.key] || '—';
+                                        tdValue.style.wordBreak = 'break-all';
+                                        tr.appendChild(tdLabel);
+                                        tr.appendChild(tdValue);
+                                        tbody.appendChild(tr);
+                                    }
+                                });
+                                // Show logo if available
+                                if (data.logoUrl) {
+                                    var tr = document.createElement('tr');
+                                    var tdLabel = document.createElement('td');
+                                    tdLabel.style.fontWeight = '600';
+                                    tdLabel.textContent = 'Logo';
+                                    var tdValue = document.createElement('td');
+                                    var img = document.createElement('img');
+                                    img.src = data.logoUrl;
+                                    img.alt = 'Logo';
+                                    img.style.maxHeight = '40px';
+                                    tdValue.appendChild(img);
+                                    tr.appendChild(tdLabel);
+                                    tr.appendChild(tdValue);
+                                    tbody.insertBefore(tr, tbody.firstChild.nextSibling);
+                                }
+                            })
+                            .catch(function(err) {
+                                document.getElementById('tokenDetailsLoading').style.display = 'none';
+                                document.getElementById('tokenDetailsError').style.display = '';
+                                document.getElementById('tokenDetailsError').textContent = 'Failed to load token details: ' + err.message;
+                            });
+                    }
+                })();
+
+                // ---- VCType toggle ----
+                function onVcTypeChanged() {
+                    var vcType = document.getElementById('vcTypeSelect').value;
+                    document.getElementById('woodgroveSection').style.display = vcType === 'WoodgroveTraining' ? '' : 'none';
+                    document.getElementById('verifiedIdentitySection').style.display = vcType === 'VerifiedIdentity' ? '' : 'none';
+                    // Reset common UI
+                    document.getElementById('qrcode').innerHTML = '';
+                    document.getElementById('qrText').style.display = 'none';
+                    document.getElementById('message-wrapper').style.display = 'none';
+                    document.getElementById('errorMessage').innerHTML = '';
+                    document.getElementById('pinCodeText').style.display = 'none';
+                    if (signIn) signIn.style.display = '';
+                    document.getElementById('btnIssueCredential').style.display = '';
                 }
 
-
-                var checkStatus = setInterval(function() {
-                    fetch('api/issuer/issuance-response?id=' + respIssuanceReq.id)
-                        .then(response => response.text())
-                        .catch(error => document.getElementById("message").innerHTML += error)
-                        .then(response => {
-                            if (response.length > 0) {
-                                console.log(response)
-                                respMsg = JSON.parse(response);
-                                // QR Code scanned, show pincode if pincode is required
-                                if (respMsg.status == 'request_retrieved') {
-                                    document.getElementById('message-wrapper').style.display = "block";
-                                    document.getElementById('qrText').style.display = "none";
-                                    document.getElementById('qrcode').style.display = "none";
-
-                                    if (respMsg.pin) {
-                                        document.getElementById('pinCodeText').style.display = "visible";
-                                    }
-                                    document.getElementById('message').innerHTML = respMsg.message;
-                                }
-                                if (respMsg.status == 'issuance_successful') {
-                                    document.getElementById('pinCodeText').style.display = "none";
-                                    document.getElementById('message').innerHTML = respMsg.message;
-                                    clearInterval(checkStatus);
-                                }
-                                if (respMsg.status == 'issuance_error') {
-                                    document.getElementById('pinCodeText').style.display = "none";
-                                    document.getElementById('message').innerHTML = "Issuance error occured, did you enter the wrong pincode? Please refresh the page and try again.";
-                                    document.getElementById('payload').innerHTML = "Payload: " + respMsg.payload;
-                                    clearInterval(checkStatus);
-                                }
-                            }
+                // ---- Selfie capture ----
+                document.getElementById('btnTakeSelfie').addEventListener('click', function() {
+                    var video = document.getElementById('selfieVideo');
+                    document.getElementById('selfieContainer').style.display = '';
+                    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
+                        .then(function(stream) {
+                            selfieStream = stream;
+                            video.srcObject = stream;
                         })
-                }, 1500); //change this to higher interval if you use ngrok to prevent overloading the free tier service
+                        .catch(function(err) {
+                            alert('Could not access camera: ' + err.message);
+                            document.getElementById('selfieContainer').style.display = 'none';
+                        });
+                });
 
-            }
-        }).catch(error => { console.log(error.message); document.getElementById("errorMessage").innerHTML += error.message; })
-});                
+                document.getElementById('btnCapture').addEventListener('click', function() {
+                    var video = document.getElementById('selfieVideo');
+                    var canvas = document.getElementById('selfieCanvas');
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    canvas.getContext('2d').drawImage(video, 0, 0);
+                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    photoBase64 = dataUrl.split(',')[1]; // strip "data:image/jpeg;base64,"
+                    showPhotoPreview(dataUrl);
+                    stopSelfieStream();
+                });
+
+                document.getElementById('btnCancelSelfie').addEventListener('click', function() {
+                    stopSelfieStream();
+                });
+
+                function stopSelfieStream() {
+                    if (selfieStream) {
+                        selfieStream.getTracks().forEach(function(t) { t.stop(); });
+                        selfieStream = null;
+                    }
+                    document.getElementById('selfieContainer').style.display = 'none';
+                }
+
+                // ---- Photo upload ----
+                document.getElementById('btnUploadPhoto').addEventListener('click', function() {
+                    document.getElementById('photoFileInput').click();
+                });
+
+                document.getElementById('photoFileInput').addEventListener('change', function(e) {
+                    var file = e.target.files[0];
+                    if (!file) return;
+                    // Convert uploaded image to JPEG via canvas for consistent format
+                    var img = new Image();
+                    img.onload = function() {
+                        var cvs = document.createElement('canvas');
+                        cvs.width = img.width;
+                        cvs.height = img.height;
+                        cvs.getContext('2d').drawImage(img, 0, 0);
+                        var jpegDataUrl = cvs.toDataURL('image/jpeg', 0.85);
+                        photoBase64 = jpegDataUrl.split(',')[1];
+                        showPhotoPreview(jpegDataUrl);
+                    };
+                    img.src = URL.createObjectURL(file);
+                });
+
+                function showPhotoPreview(dataUrl) {
+                    var img = document.getElementById('photoPreview');
+                    img.src = dataUrl;
+                    img.style.display = '';
+                    document.getElementById('photoPlaceholder').style.display = 'none';
+                }
+
+                // ---- Issuance flow common logic ----
+                function handleIssuanceResponse(message) {
+                    respIssuanceReq = JSON.parse(message);
+                    if (/Android/i.test(navigator.userAgent)) {
+                        console.log('Android device! Using deep link (' + respIssuanceReq.url + ').');
+                        window.location.href = respIssuanceReq.url;
+                        setTimeout(function() {
+                            window.location.href = "https://play.google.com/store/apps/details?id=com.azure.authenticator";
+                        }, 2000);
+                    } else if (/iPhone/i.test(navigator.userAgent)) {
+                        console.log('iOS device! Using deep link (' + respIssuanceReq.url + ').');
+                        window.location.replace(respIssuanceReq.url);
+                    } else {
+                        console.log('Not Android or iOS. Generating QR code.');
+                        document.getElementById('qrcode').innerHTML = '';
+                        qrcode = new QRCode("qrcode", { width: 300, height: 300 });
+                        qrcode.makeCode(respIssuanceReq.url);
+                        // Hide the trigger buttons and the claims form so QR code is visible
+                        document.getElementById('sign-in').style.display = "none";
+                        document.getElementById('btnIssueCredential').style.display = "none";
+                        document.getElementById('verifiedIdentitySection').style.display = "none";
+                        document.getElementById('woodgroveSection').style.display = "none";
+                        document.getElementById('qrText').style.display = "block";
+                        if (respIssuanceReq.pin) {
+                            document.getElementById('pinCodeText').innerHTML = "Pin code: " + respIssuanceReq.pin;
+                            document.getElementById('pinCodeText').style.display = "block";
+                        }
+
+                        var checkStatus = setInterval(function() {
+                            fetch('/api/issuer/issuance-response?id=' + respIssuanceReq.id)
+                                .then(function(response) { return response.text(); })
+                                .catch(function(error) { document.getElementById("message").innerHTML += error; })
+                                .then(function(response) {
+                                    if (response.length > 0) {
+                                        console.log(response);
+                                        var respMsg = JSON.parse(response);
+                                        if (respMsg.status == 'request_retrieved') {
+                                            document.getElementById('message-wrapper').style.display = "block";
+                                            document.getElementById('qrText').style.display = "none";
+                                            document.getElementById('qrcode').style.display = "none";
+                                            if (respMsg.pin) {
+                                                document.getElementById('pinCodeText').style.display = "visible";
+                                            }
+                                            document.getElementById('message').innerHTML = respMsg.message;
+                                        }
+                                        if (respMsg.status == 'issuance_successful') {
+                                            document.getElementById('pinCodeText').style.display = "none";
+                                            document.getElementById('message').innerHTML = respMsg.message;
+                                            clearInterval(checkStatus);
+                                        }
+                                        if (respMsg.status == 'issuance_error') {
+                                            document.getElementById('pinCodeText').style.display = "none";
+                                            document.getElementById('message').innerHTML = "Issuance error occurred, did you enter the wrong pincode? Please refresh the page and try again.";
+                                            document.getElementById('payload').innerHTML = "Payload: " + respMsg.payload;
+                                            clearInterval(checkStatus);
+                                        }
+                                    }
+                                });
+                        }, 1500);
+                    }
+                }
+
+                // ---- WoodgroveTraining: GET flow ----
+                signIn.addEventListener('click', function() {
+                    var vcType = document.getElementById('vcTypeSelect').value;
+                    fetch('/api/issuer/issuance-request?vctype=' + encodeURIComponent(vcType))
+                        .then(function(response) {
+                            if (!response.ok) {
+                                return response.text().then(function(t) {
+                                    var err = JSON.parse(t);
+                                    throw new Error(err.error_description || err.error || 'API error ' + response.status);
+                                });
+                            }
+                            return response.text();
+                        })
+                        .then(handleIssuanceResponse)
+                        .catch(function(error) { console.log(error.message); document.getElementById("errorMessage").innerHTML = error.message; });
+                });
+
+                // ---- VerifiedIdentity: POST flow ----
+                document.getElementById('btnIssueCredential').addEventListener('click', function() {
+                    // Format: UrlEncode(Base64Encode(JPEG image))
+                    var encodedPhoto = photoBase64 ? encodeURIComponent(photoBase64) : '';
+                    var urlParams = new URLSearchParams(window.location.search);
+                    var postBody = {
+                        firstName: document.getElementById('claimFirstName').value,
+                        lastName: document.getElementById('claimLastName').value,
+                        gender: document.getElementById('claimGender').value,
+                        nationality: document.getElementById('claimNationality').value,
+                        documentNumber: document.getElementById('claimDocumentNumber').value,
+                        address: document.getElementById('claimAddress').value,
+                        ageverified: document.getElementById('claimAgeVerified').value,
+                        verification: document.getElementById('claimVerification').value,
+                        scanneddoc: document.getElementById('claimScannedDoc').value,
+                        photo: encodedPhoto
+                    };
+                    var tokenId = urlParams.get('tokenId');
+                    if (tokenId) {
+                        postBody.token = tokenId;
+                    }
+
+                    fetch('/api/issuer/issuance-request?vctype=VerifiedIdentity', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(postBody)
+                    })
+                    .then(function(response) {
+                        if (!response.ok) {
+                            return response.text().then(function(t) {
+                                var err = JSON.parse(t);
+                                throw new Error(err.error_description || err.error || 'API error ' + response.status);
+                            });
+                        }
+                        return response.text();
+                    })
+                    .then(handleIssuanceResponse)
+                    .catch(function(error) { console.log(error.message); document.getElementById("errorMessage").innerHTML = error.message; });
+                });
             </script>
     </div>
 </div>

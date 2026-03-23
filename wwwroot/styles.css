@@ -34,9 +34,10 @@ body {
     border-radius: 8px;
 }
 
-.card-header {
-    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-    color: white;
+.card-header,
+.card > .card-header {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)) !important;
+    color: white !important;
     border-radius: 8px 8px 0 0 !important;
     font-weight: 600;
 }

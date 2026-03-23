@@ -1,0 +1,32 @@
+{
+  "includeQRCode": false,
+  "callback": {
+ 
+    "url": "https://didrp.azurewebsites.net/requestCallback",
+    "state": "stateinterop",
+    "headers": {
+      "api-key": "OPTIONAL API-KEY for ISSUANCE CALLBACK API"
+    }
+  },
+  
+  "authority": "did:web: THIS IS YOUR DID FROM THE VC PAGE IN AZURE PORTAL WHICH IS SET IN THE SAMPLE BY COPYING THE VALUE FROM APPSETTINGS.JSON   ",
+  "registration": {
+    "clientName": "Verifiable Credential Expert Sample",
+    "purpose" : " VC Expert"
+  },
+
+  "type": "VerifiedIdentity",
+  "manifest": "https://verifiedid.did.msidentity.com/v1.0/tenants/a492cff2-d733-4057-95a5-a71fc3695bc8/verifiableCredentials/contracts/c5e14c9e-4b69-c200-2e51-5d09998ff664/manifest", 
+  "claims": {
+    "firstName": "",
+    "lastName": "",
+    "scanneddoc": "",
+    "verification": "",
+    "address": "",
+    "ageverified": "",
+    "gender": "",
+    "nationality": "",
+    "documentNumber": "",
+    "photo": ""
+  }  
+}

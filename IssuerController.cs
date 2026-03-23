@@ -26,6 +26,7 @@ namespace AspNetCoreVerifiableCredentials
     public class IssuerController : ControllerBase
     {
         const string ISSUANCEPAYLOAD = "issuance_request_config.json";
+        const string ISSUANCEPAYLOAD_VERIFIEDIDENTITY = "issuance_request_config_verifiedidentity.json";
 
         protected readonly AppSettingsModel AppSettings;
         protected IMemoryCache _cache;
@@ -46,7 +47,8 @@ namespace AspNetCoreVerifiableCredentials
         /// </summary>
         /// <returns>JSON object with the address to the presentation request and optionally a QR code and a state value which can be used to check on the response status</returns>
         [HttpGet("/api/issuer/issuance-request")]
-        public async Task<ActionResult> IssuanceRequest()
+        [HttpPost("/api/issuer/issuance-request")]
+        public async Task<ActionResult> IssuanceRequest([FromQuery] string vctype = "WoodgroveTraining")
         {
             try
             {
@@ -57,7 +59,14 @@ namespace AspNetCoreVerifiableCredentials
                 string jsonString = null;
                 string newpin = null;
 
-                string payloadpath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), ISSUANCEPAYLOAD);
+                // Select the correct payload file based on the requested VCType
+                string[] allowedTypes = { "WoodgroveTraining", "VerifiedIdentity" };
+                if (!allowedTypes.Contains(vctype))
+                {
+                    return BadRequest(new { error = "400", error_description = "Invalid vctype parameter" });
+                }
+                string payloadFile = vctype == "VerifiedIdentity" ? ISSUANCEPAYLOAD_VERIFIEDIDENTITY : ISSUANCEPAYLOAD;
+                string payloadpath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), payloadFile);
                 _log.LogInformation("IssuanceRequest started. Loading payload from: {PayloadPath}", payloadpath);
                 if (!System.IO.File.Exists(payloadpath))
                 {
@@ -138,14 +147,54 @@ namespace AspNetCoreVerifiableCredentials
                 //for this sample it should be VerifiedCredentialExpert
                 if (payload["manifest"] != null)
                 {
-                    payload["manifest"] = AppSettings.CredentialManifest;
+                    // Only override manifest from appsettings for WoodgroveTraining;
+                    // VerifiedIdentity uses the manifest URL from its own config file
+                    if (vctype == "WoodgroveTraining")
+                    {
+                        payload["manifest"] = AppSettings.CredentialManifest;
+                    }
                 }
 
                 //here you could change the payload manifest and change the firstname and lastname
-                payload["claims"]["givenName"] = "Megan";
-                payload["claims"]["surname"] = "Bowen";
-                payload["claims"]["email"] = "megan@vcinteropdemo.com";
-                payload["claims"]["displayName"] = "Megan Bowen";
+                if (vctype == "WoodgroveTraining")
+                {
+                    payload["claims"]["givenName"] = "Megan";
+                    payload["claims"]["surname"] = "Bowen";
+                    payload["claims"]["email"] = "megan@vcinteropdemo.com";
+                    payload["claims"]["displayName"] = "Megan Bowen";
+                }
+                else if (vctype == "VerifiedIdentity")
+                {
+                    // Read claims from POST body
+                    JObject userClaims = null;
+                    if (HttpContext.Request.Method == "POST")
+                    {
+                        using var reader = new StreamReader(HttpContext.Request.Body);
+                        var body = await reader.ReadToEndAsync();
+                        if (!string.IsNullOrEmpty(body))
+                        {
+                            userClaims = JObject.Parse(body);
+                        }
+                    }
+
+                    payload["claims"]["firstName"] = userClaims?["firstName"]?.ToString() ?? "";
+                    payload["claims"]["lastName"] = userClaims?["lastName"]?.ToString() ?? "";
+                    payload["claims"]["scanneddoc"] = userClaims?["scanneddoc"]?.ToString() ?? "";
+                    payload["claims"]["verification"] = userClaims?["verification"]?.ToString() ?? "";
+                    payload["claims"]["address"] = userClaims?["address"]?.ToString() ?? "";
+                    payload["claims"]["ageverified"] = userClaims?["ageverified"]?.ToString() ?? "";
+                    payload["claims"]["gender"] = userClaims?["gender"]?.ToString() ?? "";
+                    payload["claims"]["nationality"] = userClaims?["nationality"]?.ToString() ?? "";
+                    payload["claims"]["documentNumber"] = userClaims?["documentNumber"]?.ToString() ?? "";
+                    payload["claims"]["photo"] = userClaims?["photo"]?.ToString() ?? "";
+
+                    // Pass issuanceTokenId at root level if provided
+                    var token = userClaims?["token"]?.ToString();
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        payload["token"] = token;
+                    }
+                }
                 
                 jsonString = JsonConvert.SerializeObject(payload);
 
@@ -408,6 +457,52 @@ namespace AspNetCoreVerifiableCredentials
                 return true;
             else
                 return false;
+        }
+
+        /// <summary>
+        /// Fetches issuance token details from the Verified ID service
+        /// </summary>
+        [HttpGet("/api/issuer/token-details")]
+        public async Task<ActionResult> GetTokenDetails([FromQuery] string tokenId)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(tokenId))
+                {
+                    return BadRequest(new { error = "400", error_description = "Missing tokenId parameter" });
+                }
+
+                if (string.IsNullOrEmpty(AppSettings.CPAuthorityId))
+                {
+                    return BadRequest(new { error = "400", error_description = "CPAuthorityId not configured" });
+                }
+
+                var accessToken = await GetAccessToken();
+                if (accessToken.Item1 == String.Empty)
+                {
+                    return BadRequest(new { error = accessToken.error, error_description = accessToken.error_description });
+                }
+
+                var client = _httpClientFactory.CreateClient();
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.token);
+
+                string url = $"https://verifiedid.did.msidentity.com/beta/verifiableCredentials/authorities/{AppSettings.CPAuthorityId}/issuanceToken/{tokenId}";
+                HttpResponseMessage res = await client.GetAsync(url);
+                string response = await res.Content.ReadAsStringAsync();
+
+                if (res.StatusCode == HttpStatusCode.OK)
+                {
+                    return new ContentResult { ContentType = "application/json", Content = response };
+                }
+                else
+                {
+                    return BadRequest(new { error = ((int)res.StatusCode).ToString(), error_description = response });
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = "400", error_description = ex.Message });
+            }
         }
     }
 }

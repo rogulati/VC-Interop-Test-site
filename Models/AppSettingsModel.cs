@@ -34,6 +34,8 @@ namespace AspNetCoreVerifiableCredentials
         public string IssuerAuthority { get; set; }
 
         public string VerifierAuthority { get; set; }
+
+        public string CPAuthorityId { get; set; }
         /// <summary>
         /// The Tenant is:
         /// - either the tenant ID of the Azure AD tenant in which this application is registered (a guid)

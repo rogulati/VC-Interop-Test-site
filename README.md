@@ -34,6 +34,7 @@ You will be asked to enter the following parameters during deployment:
 | **Issuer Authority** | Your Verified ID Issuer DID (e.g., `did:web:yourdomain.com`) |
 | **Verifier Authority** | Your Verified ID Verifier DID (e.g., `did:web:yourdomain.com`) |
 | **Credential Manifest** | URL to your Verifiable Credential manifest |
+| **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details API |
 
 After deployment:
 1. Go to your App Service in Azure Portal
@@ -54,6 +55,11 @@ After deployment:
 ## Features
 
 - **Credential Issuance** - Issue Verified ID credentials to a user's digital wallet via QR code
+- **Multiple Credential Types** - Support for WoodgroveTraining and VerifiedIdentity VCTypes via dropdown selector
+- **VerifiedIdentity Claims Form** - Full claims entry form with 10 fields (name, gender, nationality, document details, date of birth, address, photo)
+- **Photo Capture** - Take a selfie via browser camera or upload a photo file; images are converted to JPEG and sent as `UrlEncode(Base64Encode(JPEG))`
+- **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
+- **Token Details Display** - Fetches and displays issuance token metadata (name, logo, tenant, offering) from the Verified ID beta API
 - **Credential Verification** - Verify presented credentials and display claims in a tabular format
 - **FaceCheck Support** - Optional biometric liveness check during presentation using Azure AI Face API
 - **Photo Claim Rendering** - Automatically decodes and displays base64url-encoded photo claims as images
@@ -69,16 +75,21 @@ After deployment:
 ├─────────────────────────────────────────────────────────────────┤
 │  ASP.NET Core 8.0 (Razor Pages)                                │
 │  ├── IssuerController  - Issuance requests & callbacks         │
+│  │   ├── GET/POST /api/issuer/issuance-request?vctype=...      │
+│  │   ├── GET /api/issuer/token-details?tokenId=...             │
+│  │   └── VCTypes: WoodgroveTraining, VerifiedIdentity          │
 │  ├── VerifierController - Presentation requests & callbacks    │
 │  └── Pages (Home, Issuer, Verifier)                            │
+│      └── /Issuer/{vctype?}?tokenId=xxx                         │
 ├─────────────────────────────────────────────────────────────────┤
 │  Microsoft.Identity.Web (MSAL)                                 │
 │  └── Client Credentials Flow                                   │
 ├─────────────────────────────────────────────────────────────────┤
 │                         APIs                                   │
 │  └── Verified ID Request Service API                           │
-│      ├── createIssuanceRequest                                 │
-│      └── createPresentationRequest                             │
+│      ├── createIssuanceRequest (with optional token field)      │
+│      ├── createPresentationRequest                             │
+│      └── beta/issuanceToken/{tokenId} (token details)          │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -131,7 +142,8 @@ Update `appsettings.json` with your values:
     "ClientSecret": "your-client-secret",
     "IssuerAuthority": "did:web:yourdomain.com",
     "VerifierAuthority": "did:web:yourdomain.com",
-    "CredentialManifest": "<your-credential-manifest-url>"
+    "CredentialManifest": "<your-credential-manifest-url>",
+    "CPAuthorityId": "<your-cp-authority-id>"
   }
 }
 ```
@@ -200,6 +212,7 @@ az webapp config appsettings set --name vc-interop-test --resource-group rg-vc-t
   AppSettings__IssuerAuthority="did:web:yourdomain.com" \
   AppSettings__VerifierAuthority="did:web:yourdomain.com" \
   AppSettings__CredentialManifest="your-manifest-url" \
+  AppSettings__CPAuthorityId="your-cp-authority-id" \
   AppSettings__Endpoint="https://verifiedid.did.msidentity.com/v1.0/" \
   AppSettings__VCServiceScope="3db474b9-6a0c-4840-96ac-1fceb342124f/.default" \
   AppSettings__Instance="https://login.microsoftonline.com/{0}"
@@ -240,15 +253,24 @@ VC-Interop-Test-site/
 ├── wwwroot/
 │   ├── styles.css                 # Custom CSS (Entra-themed)
 │   └── qrcode.min.js             # QR code generation library
-├── IssuerController.cs            # Issuance API controller
+├── IssuerController.cs            # Issuance API controller (WoodgroveTraining + VerifiedIdentity)
 ├── VerifierController.cs          # Verification API controller
 ├── Program.cs                     # Application entry point
 ├── Startup.cs                     # Service configuration
 ├── appsettings.json               # Application configuration
-├── issuance_request_config.json   # Issuance payload template
+├── issuance_request_config.json   # WoodgroveTraining issuance payload template
+├── issuance_request_config_verifiedidentity.json  # VerifiedIdentity issuance payload (10 claims + token)
 ├── presentation_request_config.json               # Presentation payload
 └── presentation_request_config_facecheck.json      # FaceCheck presentation payload
 ```
+
+## Issuance URL Patterns
+
+| URL | Behavior |
+|-----|----------|
+| `/Issuer` | Default issuance page with WoodgroveTraining selected |
+| `/Issuer/vid` | VerifiedIdentity claims form pre-selected |
+| `/Issuer/vid?tokenId=xxx` | VerifiedIdentity with token details displayed; token passed in issuance request |
 
 ## Troubleshooting
 

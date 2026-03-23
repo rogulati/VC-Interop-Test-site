@@ -51,6 +51,13 @@
       "metadata": {
         "description": "URL to your Verifiable Credential manifest"
       }
+    },
+    "cpAuthorityId": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Your Verified ID CP Authority ID (GUID) - used for token details API"
+      }
     }
   },
   "variables": {
@@ -129,6 +136,10 @@
             {
               "name": "AppSettings__CredentialManifest",
               "value": "[parameters('credentialManifest')]"
+            },
+            {
+              "name": "AppSettings__CPAuthorityId",
+              "value": "[parameters('cpAuthorityId')]"
             }
           ]
         }
