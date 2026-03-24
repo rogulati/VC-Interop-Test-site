@@ -20,13 +20,13 @@
   "claims": {
     "firstName": "",
     "lastName": "",
-    "scanneddoc": "",
-    "verification": "",
-    "address": "",
-    "ageverified": "",
     "gender": "",
+    "state": "",
     "nationality": "",
     "documentNumber": "",
+    "documentCode": "",
+    "dateOfBirth": "",
+    "dateOfExpiry": "",
     "photo": ""
   }  
 }

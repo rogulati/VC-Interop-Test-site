@@ -56,7 +56,7 @@ After deployment:
 
 - **Credential Issuance** - Issue Verified ID credentials to a user's digital wallet via QR code
 - **Multiple Credential Types** - Support for WoodgroveTraining and VerifiedIdentity VCTypes via dropdown selector
-- **VerifiedIdentity Claims Form** - Full claims entry form with 10 fields (name, gender, nationality, document details, date of birth, address, photo)
+- **VerifiedIdentity Claims Form** - Full claims entry form with 10 core claims covering 5 IDV providers (1Kosmos, IDEMIA, Au10tix, CLEAR, TrueCredential): name, gender, nationality, document details, dates, state, photo
 - **Photo Capture** - Take a selfie via browser camera or upload a photo file; images are converted to JPEG and sent as `UrlEncode(Base64Encode(JPEG))`
 - **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
 - **Token Details Display** - Fetches and displays issuance token metadata (name, logo, tenant, offering) from the Verified ID beta API
@@ -259,7 +259,7 @@ VC-Interop-Test-site/
 ├── Startup.cs                     # Service configuration
 ├── appsettings.json               # Application configuration
 ├── issuance_request_config.json   # WoodgroveTraining issuance payload template
-├── issuance_request_config_verifiedidentity.json  # VerifiedIdentity issuance payload (10 claims + token)
+├── issuance_request_config_verifiedidentity.json  # VerifiedIdentity issuance payload (10-claim core set + token)
 ├── presentation_request_config.json               # Presentation payload
 └── presentation_request_config_facecheck.json      # FaceCheck presentation payload
 ```

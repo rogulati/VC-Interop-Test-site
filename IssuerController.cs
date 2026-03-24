@@ -179,13 +179,13 @@ namespace AspNetCoreVerifiableCredentials
 
                     payload["claims"]["firstName"] = userClaims?["firstName"]?.ToString() ?? "";
                     payload["claims"]["lastName"] = userClaims?["lastName"]?.ToString() ?? "";
-                    payload["claims"]["scanneddoc"] = userClaims?["scanneddoc"]?.ToString() ?? "";
-                    payload["claims"]["verification"] = userClaims?["verification"]?.ToString() ?? "";
-                    payload["claims"]["address"] = userClaims?["address"]?.ToString() ?? "";
-                    payload["claims"]["ageverified"] = userClaims?["ageverified"]?.ToString() ?? "";
                     payload["claims"]["gender"] = userClaims?["gender"]?.ToString() ?? "";
+                    payload["claims"]["state"] = userClaims?["state"]?.ToString() ?? "";
                     payload["claims"]["nationality"] = userClaims?["nationality"]?.ToString() ?? "";
                     payload["claims"]["documentNumber"] = userClaims?["documentNumber"]?.ToString() ?? "";
+                    payload["claims"]["documentCode"] = userClaims?["documentCode"]?.ToString() ?? "";
+                    payload["claims"]["dateOfBirth"] = userClaims?["dateOfBirth"]?.ToString() ?? "";
+                    payload["claims"]["dateOfExpiry"] = userClaims?["dateOfExpiry"]?.ToString() ?? "";
                     payload["claims"]["photo"] = userClaims?["photo"]?.ToString() ?? "";
 
                     // Pass issuanceTokenId at root level if provided
