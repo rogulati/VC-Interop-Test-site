@@ -180,7 +180,7 @@ namespace AspNetCoreVerifiableCredentials
                     payload["claims"]["firstName"] = userClaims?["firstName"]?.ToString() ?? "";
                     payload["claims"]["lastName"] = userClaims?["lastName"]?.ToString() ?? "";
                     payload["claims"]["gender"] = userClaims?["gender"]?.ToString() ?? "";
-                    payload["claims"]["state"] = userClaims?["state"]?.ToString() ?? "";
+                    payload["claims"]["address"] = userClaims?["address"]?.ToString() ?? "";
                     payload["claims"]["nationality"] = userClaims?["nationality"]?.ToString() ?? "";
                     payload["claims"]["documentNumber"] = userClaims?["documentNumber"]?.ToString() ?? "";
                     payload["claims"]["documentCode"] = userClaims?["documentCode"]?.ToString() ?? "";
