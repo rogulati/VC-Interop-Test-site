@@ -464,15 +464,26 @@ namespace AspNetCoreVerifiableCredentials
         }
 
         /// <summary>
-        /// IDV endpoint for certification testing. Returns 200 OK when tokenId=CERTIFICATIONTEST.
+        /// IDV issuance entry point. Returns 200 OK for the certification probe
+        /// (tokenId=CERTIFICATIONTEST), and for a real issuanceTokenId redirects to the
+        /// VerifiedIdentity issuance page where token details are auto-populated and the
+        /// token is included in the issuance request.
         /// </summary>
         [HttpGet("/Issuer/vid")]
         public ActionResult Vid([FromQuery] string tokenId)
         {
+            // Certification test probe used by the IDV certification harness.
             if (string.Equals(tokenId, "CERTIFICATIONTEST", StringComparison.OrdinalIgnoreCase))
             {
                 return Ok();
             }
+
+            // A real issuance tokenId: hand off to the Issuer page for the VerifiedIdentity flow.
+            if (!string.IsNullOrWhiteSpace(tokenId))
+            {
+                return Redirect($"/Issuer/VerifiedIdentity?tokenId={Uri.EscapeDataString(tokenId)}");
+            }
+
             return BadRequest(new { error = "400", error_description = "Invalid or missing tokenId" });
         }
 
