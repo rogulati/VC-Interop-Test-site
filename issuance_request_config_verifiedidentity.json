@@ -16,7 +16,7 @@
   },
 
   "type": "VerifiedIdentity",
-  "manifest": "https://verifiedid.did.msidentity.com/v1.0/tenants/a492cff2-d733-4057-95a5-a71fc3695bc8/verifiableCredentials/contracts/c5e14c9e-4b69-c200-2e51-5d09998ff664/manifest", 
+  "manifest": "https://verifiedid.did.msidentity.com/v1.0/tenants/a492cff2-d733-4057-95a5-a71fc3695bc8/verifiableCredentials/contracts/06ce5106-b207-8183-b6a0-d79f42c5206c/manifest", 
   "claims": {
     "firstName": "",
     "lastName": "",
@@ -27,6 +27,7 @@
     "documentCode": "",
     "dateOfBirth": "",
     "dateOfExpiry": "",
-    "photo": ""
+    "photo": "",
+    "verificationProvider": ""
   }  
 }

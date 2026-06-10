@@ -58,6 +58,13 @@
       "metadata": {
         "description": "Your Verified ID CP Authority ID (GUID) - used for token details API"
       }
+    },
+    "verificationProvider": {
+      "type": "string",
+      "defaultValue": "VIDTeamIDV",
+      "metadata": {
+        "description": "Value for the VerifiedIdentity verificationProvider claim (not entered in the issuance form)"
+      }
     }
   },
   "variables": {
@@ -140,6 +147,10 @@
             {
               "name": "AppSettings__CPAuthorityId",
               "value": "[parameters('cpAuthorityId')]"
+            },
+            {
+              "name": "AppSettings__VerificationProvider",
+              "value": "[parameters('verificationProvider')]"
             }
           ]
         }

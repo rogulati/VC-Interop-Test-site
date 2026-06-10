@@ -35,6 +35,7 @@ You will be asked to enter the following parameters during deployment:
 | **Verifier Authority** | Your Verified ID Verifier DID (e.g., `did:web:yourdomain.com`) |
 | **Credential Manifest** | URL to your Verifiable Credential manifest |
 | **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details API |
+| **Verification Provider** | Value for the VerifiedIdentity `verificationProvider` claim (e.g., `VIDTeamIDV`). Not entered in the issuance form — sourced from app configuration |
 
 After deployment:
 1. Go to your App Service in Azure Portal
@@ -143,7 +144,8 @@ Update `appsettings.json` with your values:
     "IssuerAuthority": "did:web:yourdomain.com",
     "VerifierAuthority": "did:web:yourdomain.com",
     "CredentialManifest": "<your-credential-manifest-url>",
-    "CPAuthorityId": "<your-cp-authority-id>"
+    "CPAuthorityId": "<your-cp-authority-id>",
+    "VerificationProvider": "VIDTeamIDV"
   }
 }
 ```
@@ -213,6 +215,7 @@ az webapp config appsettings set --name vc-interop-test --resource-group rg-vc-t
   AppSettings__VerifierAuthority="did:web:yourdomain.com" \
   AppSettings__CredentialManifest="your-manifest-url" \
   AppSettings__CPAuthorityId="your-cp-authority-id" \
+  AppSettings__VerificationProvider="VIDTeamIDV" \
   AppSettings__Endpoint="https://verifiedid.did.msidentity.com/v1.0/" \
   AppSettings__VCServiceScope="3db474b9-6a0c-4840-96ac-1fceb342124f/.default" \
   AppSettings__Instance="https://login.microsoftonline.com/{0}"

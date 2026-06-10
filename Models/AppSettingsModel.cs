@@ -31,6 +31,12 @@ namespace AspNetCoreVerifiableCredentials
 
         public string CredentialManifest { get; set; }
 
+        /// <summary>
+        /// Value for the VerifiedIdentity verificationProvider claim. This is not supplied through the
+        /// issuance form but configured via App Service configuration / appsettings.json.
+        /// </summary>
+        public string VerificationProvider { get; set; }
+
         public string IssuerAuthority { get; set; }
 
         public string VerifierAuthority { get; set; }

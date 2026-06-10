@@ -188,6 +188,10 @@ namespace AspNetCoreVerifiableCredentials
                     payload["claims"]["dateOfExpiry"] = userClaims?["dateOfExpiry"]?.ToString() ?? "";
                     payload["claims"]["photo"] = userClaims?["photo"]?.ToString() ?? "";
 
+                    // verificationProvider is not supplied through the form; it is sourced from
+                    // App Service configuration / appsettings.json (placeholder value: VIDTeamIDV)
+                    payload["claims"]["verificationProvider"] = AppSettings.VerificationProvider;
+
                     // Pass issuanceTokenId at root level if provided
                     var token = userClaims?["token"]?.ToString();
                     if (!string.IsNullOrEmpty(token))
@@ -457,6 +461,19 @@ namespace AspNetCoreVerifiableCredentials
                 return true;
             else
                 return false;
+        }
+
+        /// <summary>
+        /// IDV endpoint for certification testing. Returns 200 OK when tokenId=CERTIFICATIONTEST.
+        /// </summary>
+        [HttpGet("/Issuer/vid")]
+        public ActionResult Vid([FromQuery] string tokenId)
+        {
+            if (string.Equals(tokenId, "CERTIFICATIONTEST", StringComparison.OrdinalIgnoreCase))
+            {
+                return Ok();
+            }
+            return BadRequest(new { error = "400", error_description = "Invalid or missing tokenId" });
         }
 
         /// <summary>
