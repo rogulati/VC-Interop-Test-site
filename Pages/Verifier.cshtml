@@ -28,6 +28,10 @@
                     <input type="checkbox" class="form-check-input" id="facecheck" />
                     <label class="form-check-label" for="facecheck">FaceCheck required</label>
                 </div>
+                <div class="form-check d-inline-flex align-items-center gap-2">
+                    <input type="checkbox" class="form-check-input" id="allowrevoked" />
+                    <label class="form-check-label" for="allowrevoked">Allow Revoked</label>
+                </div>
             </div>
             <div id="qrText"  style="display:none;">
                 <p class="small-text">
@@ -56,7 +60,8 @@
 
                 signIn.addEventListener('click', () => {
                     var useFaceCheck = document.getElementById('facecheck').checked;
-                    fetch('/api/verifier/presentation-request?faceCheck=' + useFaceCheck)
+                    var allowRevoked = document.getElementById('allowrevoked').checked;
+                    fetch('/api/verifier/presentation-request?faceCheck=' + useFaceCheck + '&allowRevoked=' + allowRevoked)
                     .then(function(response) {
                         response.text()
                         .catch(error => document.getElementById("message").innerHTML = error)

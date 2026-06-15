@@ -62,6 +62,7 @@ After deployment:
 - **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
 - **Token Details Display** - Fetches and displays issuance token metadata (name, logo, tenant, offering) from the Verified ID beta API
 - **Credential Verification** - Verify presented credentials and display claims in a tabular format
+- **Revocation Toggle** - An **Allow Revoked** checkbox on the Verifier page (default off). When off, revoked credentials are rejected (`allowRevoked: false`); when on, revoked credentials are accepted (`allowRevoked: true`). Lets you test both the accepted and rejected revocation flows
 - **FaceCheck Support** - Optional biometric liveness check during presentation using Azure AI Face API
 - **Photo Claim Rendering** - Automatically decodes and displays base64url-encoded photo claims as images
 - **FaceCheck Confidence Score** - Displays match confidence with color-coded indicators (green/amber/red)
@@ -263,7 +264,8 @@ VC-Interop-Test-site/
 ├── appsettings.json               # Application configuration
 ├── issuance_request_config.json   # WoodgroveTraining issuance payload template
 ├── issuance_request_config_verifiedidentity.json  # VerifiedIdentity issuance payload (10-claim core set + token)
-├── presentation_request_config.json               # Presentation payload
+├── presentation_request_config.json               # Presentation payload (allowRevoked: true)
+├── presentation_request_config_enforcerevocation.json  # Presentation payload that rejects revoked credentials (allowRevoked: false)
 └── presentation_request_config_facecheck.json      # FaceCheck presentation payload
 ```
 
@@ -274,6 +276,16 @@ VC-Interop-Test-site/
 | `/Issuer` | Default issuance page with WoodgroveTraining selected |
 | `/Issuer/vid` | VerifiedIdentity claims form pre-selected |
 | `/Issuer/vid?tokenId=xxx` | VerifiedIdentity with token details displayed; token passed in issuance request |
+
+## Verification Options
+
+The Verifier page exposes two checkboxes that map to query parameters on `/api/verifier/presentation-request`:
+
+| Query parameter | Default | Config file used | Behavior |
+|-----------------|---------|------------------|----------|
+| `allowRevoked=false` | ✓ (checkbox off) | `presentation_request_config_enforcerevocation.json` | Revoked credentials are **rejected** |
+| `allowRevoked=true` | (checkbox on) | `presentation_request_config.json` | Revoked credentials are **accepted** |
+| `faceCheck=true` | (checkbox on) | `presentation_request_config_facecheck.json` | Requires FaceCheck; takes priority if both are checked |
 
 ## Troubleshooting
 

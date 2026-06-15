@@ -25,6 +25,7 @@ namespace AspNetCoreVerifiableCredentials
     {
         const string PRESENTATIONPAYLOAD = "presentation_request_config.json";
         const string PRESENTATIONPAYLOAD_FACECHECK = "presentation_request_config_facecheck.json";
+        const string PRESENTATIONPAYLOAD_ENFORCEREVOCATION = "presentation_request_config_enforcerevocation.json";
 
         protected readonly AppSettingsModel AppSettings;
         protected IMemoryCache _cache;
@@ -45,7 +46,7 @@ namespace AspNetCoreVerifiableCredentials
         /// </summary>
         /// <returns>JSON object with the address to the presentation request and optionally a QR code and a state value which can be used to check on the response status</returns>
         [HttpGet("/api/verifier/presentation-request")]
-        public async Task<ActionResult> PresentationRequest([FromQuery] bool faceCheck = false)
+        public async Task<ActionResult> PresentationRequest([FromQuery] bool faceCheck = false, [FromQuery] bool allowRevoked = false)
         {
             try
             {
@@ -55,8 +56,16 @@ namespace AspNetCoreVerifiableCredentials
                 //and having all config in a central location appsettings.json. 
                 //if you want to manually change the payload in the json file make sure you comment out the code below which will modify it automatically
                 //
-                string selectedPayload = faceCheck ? PRESENTATIONPAYLOAD_FACECHECK : PRESENTATIONPAYLOAD;
-                _log.LogInformation("FaceCheck: {FaceCheck}, using payload: {Payload}", faceCheck, selectedPayload);
+                string selectedPayload = PRESENTATIONPAYLOAD_ENFORCEREVOCATION;
+                if (faceCheck)
+                {
+                    selectedPayload = PRESENTATIONPAYLOAD_FACECHECK;
+                }
+                else if (allowRevoked)
+                {
+                    selectedPayload = PRESENTATIONPAYLOAD;
+                }
+                _log.LogInformation("FaceCheck: {FaceCheck}, AllowRevoked: {AllowRevoked}, using payload: {Payload}", faceCheck, allowRevoked, selectedPayload);
                 string payloadpath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), selectedPayload);
                 _log.LogInformation("PresentationRequest started. Loading payload from: {PayloadPath}", payloadpath);
                 if (!System.IO.File.Exists(payloadpath))
