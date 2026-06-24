@@ -33,9 +33,66 @@ You will be asked to enter the following parameters during deployment:
 | **Client Secret** | Client secret from your app registration |
 | **Issuer Authority** | Your Verified ID Issuer DID (e.g., `did:web:yourdomain.com`) |
 | **Verifier Authority** | Your Verified ID Verifier DID (e.g., `did:web:yourdomain.com`) |
-| **Credential Manifest** | URL to your Verifiable Credential manifest |
+| **Credential Manifest** | URL to your Verifiable Credential manifest (used by the WoodgroveTraining flow) |
 | **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details API |
 | **Verification Provider** | Value for the VerifiedIdentity `verificationProvider` claim (e.g., `VIDTeamIDV`). Not entered in the issuance form — sourced from app configuration |
+| **Manifest\* / Type\*** | Optional per-flow manifest URL and credential type for the six configurable issuance flows (Employee, IdTokenHint, IdToken, Presentation, SelfIssued, Multiple). Both `Manifest<Flow>` and `Type<Flow>` must be set for a flow to work |
+| **Id Token Hint Given/Family Name** | Sample `given_name` / `family_name` claim values for the Id token hint attestation flow |
+
+> **Filling the ARM/portal form:** Each parameter above is its own field in the **Deploy to Azure** form — just type the plain value into it (no `key=value` syntax). The template maps each field to the matching `AppSettings__<Name>` app setting automatically. The `key=value` form is only needed when using the Azure CLI or adding settings manually under App Service → **Environment variables**.
+
+#### How to fill `Manifest<Flow>` and `Type<Flow>`
+
+`WoodgroveTraining` and `VerifiedIdentity` work out of the box. The six configurable flows are **opt-in** — a flow only works once **both** its `Manifest<Flow>` URL and `Type<Flow>` name are set, and they must come from the **same** credential contract.
+
+**`Manifest<Flow>` — the contract/manifest URL.** Format:
+
+```
+https://verifiedid.did.msidentity.com/v1.0/tenants/<tenantId>/verifiableCredentials/contracts/<contractId>/manifest
+```
+
+Where to find it:
+1. Azure Portal → **Verified ID** → **Credentials**.
+2. Open the credential you want that flow to issue.
+3. Copy the **Issue credential URL / manifest URL** (it ends in `/manifest`).
+
+**`Type<Flow>` — the credential type name.** This is the credential-specific value in the manifest's `type` array (e.g., `VerifiedEmployee`), **not** the generic `VerifiableCredential`. It must match exactly what the manifest declares or issuance fails. Find it by:
+- Opening the manifest URL in a browser and reading the `type` array, or
+- Using the credential name shown when you created the credential in the Verified ID portal.
+
+**Example pairing for the Employee flow:**
+
+| App Service variable | Example value |
+|----------------------|---------------|
+| `AppSettings__ManifestEmployee` | `https://verifiedid.did.msidentity.com/v1.0/tenants/a492cff2-.../contracts/c5e14c9e-.../manifest` |
+| `AppSettings__TypeEmployee` | `VerifiedEmployee` |
+
+You only need to fill the flows you actually want to test — leave the rest blank.
+
+#### How to create the credential definitions (per flow)
+
+Each configurable flow needs a credential created in your Verified ID tenant (the **Create verifiable credentials** screen in the Microsoft Entra admin center). A credential is defined by a **rules definition** (what claims the user must provide and where they come from) and a **display definition** (how the card looks in the wallet). After you create one, copy its **manifest URL** and **type** into the matching `Manifest<Flow>` / `Type<Flow>` settings described above.
+
+Start here:
+
+- **Set up your tenant** — [Quick setup](https://learn.microsoft.com/en-us/entra/verified-id/verifiable-credentials-configure-tenant-quick) or [Advanced setup](https://learn.microsoft.com/en-us/entra/verified-id/verifiable-credentials-configure-tenant)
+- **Customize credentials (author rules + display definitions)** — [Customize your verifiable credentials](https://learn.microsoft.com/en-us/entra/verified-id/credential-design)
+- **Full JSON reference** — [Rules and display definition reference](https://learn.microsoft.com/en-us/entra/verified-id/rules-and-display-definitions-model)
+
+Per-flow how-to guides — each row maps to a dropdown option on the Issuer page:
+
+| Dropdown flow | `vctype` | Attestation type | Microsoft Learn how-to |
+|---------------|----------|------------------|------------------------|
+| Directory based - Employee | `Employee` | Managed / directory-based (`VerifiedEmployee`) | [Issue a VC for directory-based claims](https://learn.microsoft.com/en-us/entra/verified-id/how-to-use-quickstart-verifiedemployee) |
+| Id token hint attestation | `IdTokenHint` | `idTokenHint` | [Custom credential (ID token hint)](https://learn.microsoft.com/en-us/entra/verified-id/how-to-use-quickstart) |
+| Id token attestation | `IdToken` | `idToken` | [ID token attestation](https://learn.microsoft.com/en-us/entra/verified-id/how-to-use-quickstart-idtoken) |
+| Presentation attestation | `Presentation` | `verifiablePresentation` | [Verifiable presentation attestation](https://learn.microsoft.com/en-us/entra/verified-id/how-to-use-quickstart-presentation) |
+| Self issued attestation | `SelfIssued` | `selfIssued` | [Self-attested claims](https://learn.microsoft.com/en-us/entra/verified-id/how-to-use-quickstart-selfissued) |
+| Multiple attestations | `Multiple` | combination (e.g. `idTokenHint` + `selfIssued`) | [Multiple attestations](https://learn.microsoft.com/en-us/entra/verified-id/how-to-use-quickstart-multiple) |
+
+> **Employee** is a *managed* credential — its rules are fixed (claims come from the user's Microsoft Entra profile) and you only style the display. The other flows are *custom* credentials where you author both the rules and display JSON. The **Multiple** flow's `idTokenHint` claim names (`given_name`, `family_name`) must match what this app injects via `MultipleClaims`.
+
+All guides are part of the [Microsoft Entra Verified ID documentation](https://learn.microsoft.com/en-us/entra/verified-id/).
 
 After deployment:
 1. Go to your App Service in Azure Portal
@@ -56,7 +113,7 @@ After deployment:
 ## Features
 
 - **Credential Issuance** - Issue Verified ID credentials to a user's digital wallet via QR code
-- **Multiple Credential Types** - Support for WoodgroveTraining and VerifiedIdentity VCTypes via dropdown selector
+- **Multiple Credential Types** - Support for WoodgroveTraining, VerifiedIdentity, and six config-driven attestation flows (Directory based - Employee, Id token hint, Id token, Presentation, Self issued, Multiple attestations) via a dropdown selector. Each configurable flow sources its manifest, credential type, and (for Id token hint) claims from App Service configuration
 - **VerifiedIdentity Claims Form** - Full claims entry form with 10 core claims covering 5 IDV providers (1Kosmos, IDEMIA, Au10tix, CLEAR, TrueCredential): name, gender, nationality, document details, dates, address, photo
 - **Photo Capture** - Take a selfie via browser camera or upload a photo file; images are converted to JPEG and sent as `UrlEncode(Base64Encode(JPEG))`
 - **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
@@ -79,7 +136,9 @@ After deployment:
 │  ├── IssuerController  - Issuance requests & callbacks         │
 │  │   ├── GET/POST /api/issuer/issuance-request?vctype=...      │
 │  │   ├── GET /api/issuer/token-details?tokenId=...             │
-│  │   └── VCTypes: WoodgroveTraining, VerifiedIdentity          │
+│  │   └── VCTypes: WoodgroveTraining, VerifiedIdentity,         │
+│  │       Employee, IdTokenHint, IdToken, Presentation,        │
+│  │       SelfIssued, Multiple (config-driven)                 │
 │  ├── VerifierController - Presentation requests & callbacks    │
 │  └── Pages (Home, Issuer, Verifier)                            │
 │      └── /Issuer/{vctype?}?tokenId=xxx                         │
@@ -146,10 +205,33 @@ Update `appsettings.json` with your values:
     "VerifierAuthority": "did:web:yourdomain.com",
     "CredentialManifest": "<your-credential-manifest-url>",
     "CPAuthorityId": "<your-cp-authority-id>",
-    "VerificationProvider": "VIDTeamIDV"
+    "VerificationProvider": "VIDTeamIDV",
+
+    "ManifestEmployee": "<manifest-url-for-employee>",
+    "ManifestIdTokenHint": "<manifest-url-for-idtokenhint>",
+    "ManifestIdToken": "<manifest-url-for-idtoken>",
+    "ManifestPresentation": "<manifest-url-for-presentation>",
+    "ManifestSelfIssued": "<manifest-url-for-selfissued>",
+    "ManifestMultiple": "<manifest-url-for-multiple>",
+    "TypeEmployee": "<credential-type-for-employee>",
+    "TypeIdTokenHint": "<credential-type-for-idtokenhint>",
+    "TypeIdToken": "<credential-type-for-idtoken>",
+    "TypePresentation": "<credential-type-for-presentation>",
+    "TypeSelfIssued": "<credential-type-for-selfissued>",
+    "TypeMultiple": "<credential-type-for-multiple>",
+    "IdTokenHintClaims": {
+      "given_name": "Megan",
+      "family_name": "Bowen"
+    },
+    "MultipleClaims": {
+      "given_name": "Megan",
+      "family_name": "Bowen"
+    }
   }
 }
 ```
+
+> **Per-flow configuration:** `WoodgroveTraining` and `VerifiedIdentity` work out of the box. The six configurable flows (Employee, IdTokenHint, IdToken, Presentation, SelfIssued, Multiple) are **opt-in** — a flow only works once **both** its `Manifest<Flow>` and `Type<Flow>` values are set. The `IdTokenHintClaims` dictionary supplies the claims injected into the Id token hint flow, and the `MultipleClaims` dictionary supplies the idTokenHint attestation claims for the Multiple attestations flow (its other attestations — self-issued, presentation, idToken — are collected in the wallet). None of these affect the WoodgroveTraining or VerifiedIdentity flows.
 
 ### Running Locally
 
@@ -217,6 +299,22 @@ az webapp config appsettings set --name vc-interop-test --resource-group rg-vc-t
   AppSettings__CredentialManifest="your-manifest-url" \
   AppSettings__CPAuthorityId="your-cp-authority-id" \
   AppSettings__VerificationProvider="VIDTeamIDV" \
+  AppSettings__ManifestEmployee="manifest-url-for-employee" \
+  AppSettings__ManifestIdTokenHint="manifest-url-for-idtokenhint" \
+  AppSettings__ManifestIdToken="manifest-url-for-idtoken" \
+  AppSettings__ManifestPresentation="manifest-url-for-presentation" \
+  AppSettings__ManifestSelfIssued="manifest-url-for-selfissued" \
+  AppSettings__ManifestMultiple="manifest-url-for-multiple" \
+  AppSettings__TypeEmployee="credential-type-for-employee" \
+  AppSettings__TypeIdTokenHint="credential-type-for-idtokenhint" \
+  AppSettings__TypeIdToken="credential-type-for-idtoken" \
+  AppSettings__TypePresentation="credential-type-for-presentation" \
+  AppSettings__TypeSelfIssued="credential-type-for-selfissued" \
+  AppSettings__TypeMultiple="credential-type-for-multiple" \
+  AppSettings__IdTokenHintClaims__given_name="Megan" \
+  AppSettings__IdTokenHintClaims__family_name="Bowen" \
+  AppSettings__MultipleClaims__given_name="Megan" \
+  AppSettings__MultipleClaims__family_name="Bowen" \
   AppSettings__Endpoint="https://verifiedid.did.msidentity.com/v1.0/" \
   AppSettings__VCServiceScope="3db474b9-6a0c-4840-96ac-1fceb342124f/.default" \
   AppSettings__Instance="https://login.microsoftonline.com/{0}"

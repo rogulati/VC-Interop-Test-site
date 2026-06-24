@@ -3,6 +3,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Identity.Web;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Security.Cryptography.X509Certificates;
@@ -30,6 +31,49 @@ namespace AspNetCoreVerifiableCredentials
         public string VCServiceScope { get; set; }
 
         public string CredentialManifest { get; set; }
+
+        /// <summary>
+        /// Per-flow credential manifest URLs for the issuance test cases. These are set by the
+        /// administrator via App Service configuration (environment variables) / appsettings.json.
+        /// When a value is empty, the manifest defined inside the flow's request config file is used.
+        /// </summary>
+        public string ManifestEmployee { get; set; }
+        public string ManifestIdTokenHint { get; set; }
+        public string ManifestIdToken { get; set; }
+        public string ManifestPresentation { get; set; }
+        public string ManifestSelfIssued { get; set; }
+        public string ManifestMultiple { get; set; }
+
+        /// <summary>
+        /// Per-flow credential type names for the issuance test cases. Set by the administrator via
+        /// App Service configuration / appsettings.json so type names are not hard-coded in the
+        /// request config template files. When empty, the type defined inside the flow's request
+        /// config file is used.
+        /// </summary>
+        public string TypeEmployee { get; set; }
+        public string TypeIdTokenHint { get; set; }
+        public string TypeIdToken { get; set; }
+        public string TypePresentation { get; set; }
+        public string TypeSelfIssued { get; set; }
+        public string TypeMultiple { get; set; }
+
+        /// <summary>
+        /// Claim name/value pairs for the Id token hint attestation flow. Set by the administrator via
+        /// App Service configuration (e.g. AppSettings__IdTokenHintClaims__given_name = Megan) so the
+        /// claim names and values are not hard-coded. When empty, the claims in the flow's request
+        /// config file are used.
+        /// </summary>
+        public Dictionary<string, string> IdTokenHintClaims { get; set; }
+
+        /// <summary>
+        /// Claim name/value pairs for the idTokenHint attestation portion of the Multiple attestations
+        /// flow. Set by the administrator via App Service configuration (e.g.
+        /// AppSettings__MultipleClaims__given_name = Megan) so the claim names and values are not
+        /// hard-coded. When empty, the claims in the Multiple flow's request config file are used.
+        /// The credential's other attestations (self-issued, presentation, idToken) are collected in
+        /// the wallet and require no input here.
+        /// </summary>
+        public Dictionary<string, string> MultipleClaims { get; set; }
 
         /// <summary>
         /// Value for the VerifiedIdentity verificationProvider claim. This is not supplied through the

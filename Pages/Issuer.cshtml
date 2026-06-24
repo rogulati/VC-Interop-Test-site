@@ -3,6 +3,37 @@
 @{
     ViewData["Title"] = "Issue Credential";
     var preselect = Model.VcType;
+
+    // The order here drives the dropdown order on the Issuer page.
+    // Group: "Core" flows (WoodgroveTraining, VerifiedIdentity) are listed first, followed by the
+    // remaining attestation scenarios. The Value is the vctype sent to the controller and MUST match
+    // IssuerController.AllowedVcTypes; the Label is display-only.
+    var issuanceFlows = new (string Value, string Label, string Group)[]
+    {
+        ("WoodgroveTraining", "WoodgroveTraining", "Core"),
+        ("VerifiedIdentity", "VerifiedIdentity", "Core"),
+        ("Employee", "Directory based - Employee", "Attestation scenarios"),
+        ("IdTokenHint", "Id token hint attestation", "Attestation scenarios"),
+        ("IdToken", "Id token attestation", "Attestation scenarios"),
+        ("Presentation", "Presentation attestation", "Attestation scenarios"),
+        ("SelfIssued", "Self issued attestation", "Attestation scenarios"),
+        ("Multiple", "Multiple attestations", "Attestation scenarios")
+    };
+
+    // Resolve the preselected flow from the optional route value (case-insensitive); "vid" is an alias.
+    var selectedType = "WoodgroveTraining";
+    if (string.Equals(preselect, "VerifiedIdentity", StringComparison.OrdinalIgnoreCase) || preselect == "vid")
+    {
+        selectedType = "VerifiedIdentity";
+    }
+    else
+    {
+        var match = issuanceFlows.FirstOrDefault(f => string.Equals(f.Value, preselect, StringComparison.OrdinalIgnoreCase));
+        if (match.Value != null)
+        {
+            selectedType = match.Value;
+        }
+    }
 }
 
 <!-- Page Header -->
@@ -17,16 +48,22 @@
 <div class="card section-card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="bi bi-person-badge me-2"></i>Verifiable Credential Issuance</span>
-        <select id="vcTypeSelect" class="form-select form-select-sm w-auto bg-white" onchange="onVcTypeChanged()" style="max-width:200px;">
-            @if (preselect == "VerifiedIdentity" || preselect == "vid")
+        <select id="vcTypeSelect" class="form-select form-select-sm w-auto bg-white" onchange="onVcTypeChanged()" style="max-width:260px;">
+            @foreach (var group in issuanceFlows.GroupBy(f => f.Group))
             {
-                <option value="WoodgroveTraining">WoodgroveTraining</option>
-                <option value="VerifiedIdentity" selected>VerifiedIdentity</option>
-            }
-            else
-            {
-                <option value="WoodgroveTraining" selected>WoodgroveTraining</option>
-                <option value="VerifiedIdentity">VerifiedIdentity</option>
+                <optgroup label="@group.Key">
+                    @foreach (var flow in group)
+                    {
+                        if (flow.Value == selectedType)
+                        {
+                            <option value="@flow.Value" selected>@flow.Label</option>
+                        }
+                        else
+                        {
+                            <option value="@flow.Value">@flow.Label</option>
+                        }
+                    }
+                </optgroup>
             }
         </select>
     </div>
@@ -51,6 +88,39 @@
 
             <!-- WoodgroveTraining section -->
             <div id="woodgroveSection">
+                <!-- Hard-coded test claim values used by the WoodgroveTraining flow -->
+                <div id="woodgroveTestValues" class="card border-primary mx-auto mb-3 text-start" style="max-width:520px;">
+                    <div class="card-header bg-primary text-white d-flex align-items-center py-2">
+                        <i class="bi bi-clipboard-data me-2"></i>
+                        <span>WoodgroveTraining &mdash; Test Claim Values</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <p class="text-muted small px-3 pt-3 mb-2">
+                            These values are issued into the credential. They are predefined in the sample
+                            and cannot be edited from this page.
+                        </p>
+                        <table class="table table-sm table-striped mb-0">
+                            <tbody>
+                                <tr>
+                                    <th class="ps-3" style="width:45%">Given Name</th>
+                                    <td><code>Megan</code></td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-3">Surname</th>
+                                    <td><code>Bowen</code></td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-3">Email</th>
+                                    <td><code>megan@vcinteropdemo.com</code></td>
+                                </tr>
+                                <tr>
+                                    <th class="ps-3">Display Name</th>
+                                    <td><code>Megan Bowen</code></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <button type="button" id="sign-in" class="btn btn-primary btn-lg mb-3">
                     <i class="bi bi-qr-code me-2"></i>GET CREDENTIAL
                 </button>
@@ -174,15 +244,14 @@
                 var signIn = document.getElementById('sign-in');
                 var qrcode = new QRCode("qrcode", { width: 300, height: 300 });
                 var respIssuanceReq = null;
+                var statusCheckInterval = null;  // active polling timer for the current issuance request
                 var photoBase64 = '';  // base64 JPEG from camera or file upload
                 var selfieStream = null;
 
                 // ---- On page load: apply preselection from route ----
                 (function() {
-                    var select = document.getElementById('vcTypeSelect');
-                    if (select.value === 'VerifiedIdentity') {
-                        onVcTypeChanged();
-                    }
+                    // Set correct section visibility for whatever flow is preselected.
+                    onVcTypeChanged();
 
                     // ---- Fetch token details if tokenId is present ----
                     var urlParams = new URLSearchParams(window.location.search);
@@ -255,14 +324,26 @@
                 // ---- VCType toggle ----
                 function onVcTypeChanged() {
                     var vcType = document.getElementById('vcTypeSelect').value;
-                    document.getElementById('woodgroveSection').style.display = vcType === 'WoodgroveTraining' ? '' : 'none';
+                    // VerifiedIdentity uses the claims form; every other flow uses the simple GET button.
                     document.getElementById('verifiedIdentitySection').style.display = vcType === 'VerifiedIdentity' ? '' : 'none';
-                    // Reset common UI
-                    document.getElementById('qrcode').innerHTML = '';
+                    document.getElementById('woodgroveSection').style.display = vcType === 'VerifiedIdentity' ? 'none' : '';
+                    // Show the hard-coded test claim values only for the WoodgroveTraining flow.
+                    document.getElementById('woodgroveTestValues').style.display = vcType === 'WoodgroveTraining' ? '' : 'none';
+                    // Stop any in-flight polling from a previous issuance so switching flows starts clean.
+                    if (statusCheckInterval) { clearInterval(statusCheckInterval); statusCheckInterval = null; }
+                    respIssuanceReq = null;
+                    // Reset common UI. Note we restore qrcode display:'' because the success/retrieved
+                    // handlers hide it; without this the next flow's QR code would never become visible.
+                    var qrEl = document.getElementById('qrcode');
+                    qrEl.innerHTML = '';
+                    qrEl.style.display = '';
                     document.getElementById('qrText').style.display = 'none';
                     document.getElementById('message-wrapper').style.display = 'none';
+                    document.getElementById('message').innerHTML = '';
+                    document.getElementById('payload').innerHTML = '';
                     document.getElementById('errorMessage').innerHTML = '';
                     document.getElementById('pinCodeText').style.display = 'none';
+                    document.getElementById('pinCodeText').innerHTML = '';
                     if (signIn) signIn.style.display = '';
                     document.getElementById('btnIssueCredential').style.display = '';
                 }
@@ -363,7 +444,7 @@
                             document.getElementById('pinCodeText').style.display = "block";
                         }
 
-                        var checkStatus = setInterval(function() {
+                        statusCheckInterval = setInterval(function() {
                             fetch('/api/issuer/issuance-response?id=' + respIssuanceReq.id)
                                 .then(function(response) { return response.text(); })
                                 .catch(function(error) { document.getElementById("message").innerHTML += error; })
@@ -383,13 +464,13 @@
                                         if (respMsg.status == 'issuance_successful') {
                                             document.getElementById('pinCodeText').style.display = "none";
                                             document.getElementById('message').innerHTML = respMsg.message;
-                                            clearInterval(checkStatus);
+                                            clearInterval(statusCheckInterval);
                                         }
                                         if (respMsg.status == 'issuance_error') {
                                             document.getElementById('pinCodeText').style.display = "none";
                                             document.getElementById('message').innerHTML = "Issuance error occurred, did you enter the wrong pincode? Please refresh the page and try again.";
                                             document.getElementById('payload').innerHTML = "Payload: " + respMsg.payload;
-                                            clearInterval(checkStatus);
+                                            clearInterval(statusCheckInterval);
                                         }
                                     }
                                 });

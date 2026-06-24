@@ -65,6 +65,118 @@
       "metadata": {
         "description": "Value for the VerifiedIdentity verificationProvider claim (not entered in the issuance form)"
       }
+    },
+    "manifestEmployee": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Manifest URL for the Directory based - Employee issuance flow"
+      }
+    },
+    "manifestIdTokenHint": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Manifest URL for the Id token hint attestation issuance flow"
+      }
+    },
+    "manifestIdToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Manifest URL for the Id token attestation issuance flow"
+      }
+    },
+    "manifestPresentation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Manifest URL for the Presentation attestation issuance flow"
+      }
+    },
+    "manifestSelfIssued": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Manifest URL for the Self issued attestation issuance flow"
+      }
+    },
+    "manifestMultiple": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Manifest URL for the Multiple attestations issuance flow"
+      }
+    },
+    "typeEmployee": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Credential type for the Directory based - Employee issuance flow"
+      }
+    },
+    "typeIdTokenHint": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Credential type for the Id token hint attestation issuance flow"
+      }
+    },
+    "typeIdToken": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Credential type for the Id token attestation issuance flow"
+      }
+    },
+    "typePresentation": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Credential type for the Presentation attestation issuance flow"
+      }
+    },
+    "typeSelfIssued": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Credential type for the Self issued attestation issuance flow"
+      }
+    },
+    "typeMultiple": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Credential type for the Multiple attestations issuance flow"
+      }
+    },
+    "idTokenHintGivenName": {
+      "type": "string",
+      "defaultValue": "Megan",
+      "metadata": {
+        "description": "Sample 'given_name' claim value for the Id token hint attestation flow"
+      }
+    },
+    "idTokenHintFamilyName": {
+      "type": "string",
+      "defaultValue": "Bowen",
+      "metadata": {
+        "description": "Sample 'family_name' claim value for the Id token hint attestation flow"
+      }
+    },
+    "multipleGivenName": {
+      "type": "string",
+      "defaultValue": "Megan",
+      "metadata": {
+        "description": "Sample 'given_name' claim value for the idTokenHint portion of the Multiple attestations flow"
+      }
+    },
+    "multipleFamilyName": {
+      "type": "string",
+      "defaultValue": "Bowen",
+      "metadata": {
+        "description": "Sample 'family_name' claim value for the idTokenHint portion of the Multiple attestations flow"
+      }
     }
   },
   "variables": {
@@ -151,6 +263,70 @@
             {
               "name": "AppSettings__VerificationProvider",
               "value": "[parameters('verificationProvider')]"
+            },
+            {
+              "name": "AppSettings__ManifestEmployee",
+              "value": "[parameters('manifestEmployee')]"
+            },
+            {
+              "name": "AppSettings__ManifestIdTokenHint",
+              "value": "[parameters('manifestIdTokenHint')]"
+            },
+            {
+              "name": "AppSettings__ManifestIdToken",
+              "value": "[parameters('manifestIdToken')]"
+            },
+            {
+              "name": "AppSettings__ManifestPresentation",
+              "value": "[parameters('manifestPresentation')]"
+            },
+            {
+              "name": "AppSettings__ManifestSelfIssued",
+              "value": "[parameters('manifestSelfIssued')]"
+            },
+            {
+              "name": "AppSettings__ManifestMultiple",
+              "value": "[parameters('manifestMultiple')]"
+            },
+            {
+              "name": "AppSettings__TypeEmployee",
+              "value": "[parameters('typeEmployee')]"
+            },
+            {
+              "name": "AppSettings__TypeIdTokenHint",
+              "value": "[parameters('typeIdTokenHint')]"
+            },
+            {
+              "name": "AppSettings__TypeIdToken",
+              "value": "[parameters('typeIdToken')]"
+            },
+            {
+              "name": "AppSettings__TypePresentation",
+              "value": "[parameters('typePresentation')]"
+            },
+            {
+              "name": "AppSettings__TypeSelfIssued",
+              "value": "[parameters('typeSelfIssued')]"
+            },
+            {
+              "name": "AppSettings__TypeMultiple",
+              "value": "[parameters('typeMultiple')]"
+            },
+            {
+              "name": "AppSettings__IdTokenHintClaims__given_name",
+              "value": "[parameters('idTokenHintGivenName')]"
+            },
+            {
+              "name": "AppSettings__IdTokenHintClaims__family_name",
+              "value": "[parameters('idTokenHintFamilyName')]"
+            },
+            {
+              "name": "AppSettings__MultipleClaims__given_name",
+              "value": "[parameters('multipleGivenName')]"
+            },
+            {
+              "name": "AppSettings__MultipleClaims__family_name",
+              "value": "[parameters('multipleFamilyName')]"
             }
           ]
         }

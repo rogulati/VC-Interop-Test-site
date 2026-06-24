@@ -1,0 +1,17 @@
+{
+  "includeQRCode": false,
+  "callback": {
+    "url": "https://didrp.azurewebsites.net/requestCallback",
+    "state": "stateinterop",
+    "headers": {
+      "api-key": "OPTIONAL API-KEY for ISSUANCE CALLBACK API"
+    }
+  },
+  "authority": "did:web: THIS IS YOUR DID FROM THE VC PAGE IN AZURE PORTAL WHICH IS SET IN THE SAMPLE BY COPYING THE VALUE FROM APPSETTINGS.JSON",
+  "registration": {
+    "clientName": "VC Interop Test Site",
+    "purpose": "Directory based - Employee"
+  },
+  "type": "TYPE IS SET FROM APP SERVICE CONFIG: TypeEmployee",
+  "manifest": "MANIFEST URL IS SET FROM APP SERVICE CONFIG: ManifestEmployee"
+}

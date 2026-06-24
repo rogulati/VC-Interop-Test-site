@@ -27,7 +27,60 @@ namespace AspNetCoreVerifiableCredentials
     {
         const string ISSUANCEPAYLOAD = "issuance_request_config.json";
         const string ISSUANCEPAYLOAD_VERIFIEDIDENTITY = "issuance_request_config_verifiedidentity.json";
+        const string ISSUANCEPAYLOAD_EMPLOYEE = "issuance_request_config_employee.json";
+        const string ISSUANCEPAYLOAD_IDTOKENHINT = "issuance_request_config_idtokenhint.json";
+        const string ISSUANCEPAYLOAD_IDTOKEN = "issuance_request_config_idtoken.json";
+        const string ISSUANCEPAYLOAD_PRESENTATION = "issuance_request_config_presentation.json";
+        const string ISSUANCEPAYLOAD_SELFISSUED = "issuance_request_config_selfissued.json";
+        const string ISSUANCEPAYLOAD_MULTIPLE = "issuance_request_config_multiple.json";
 
+        // Supported issuance flows. WoodgroveTraining and VerifiedIdentity keep their existing behavior;
+        // the remaining flows are the admin-configurable test cases whose manifest URL is supplied
+        // through App Service configuration (see GetManifestForVcType).
+        private static readonly string[] AllowedVcTypes =
+        {
+            "WoodgroveTraining", "VerifiedIdentity",
+            "Employee", "IdTokenHint", "IdToken", "Presentation", "SelfIssued", "Multiple"
+        };
+
+        // Maps a vctype to the request config template file that ships with the app.
+        private static string GetPayloadFileForVcType(string vctype) => vctype switch
+        {
+            "VerifiedIdentity" => ISSUANCEPAYLOAD_VERIFIEDIDENTITY,
+            "Employee" => ISSUANCEPAYLOAD_EMPLOYEE,
+            "IdTokenHint" => ISSUANCEPAYLOAD_IDTOKENHINT,
+            "IdToken" => ISSUANCEPAYLOAD_IDTOKEN,
+            "Presentation" => ISSUANCEPAYLOAD_PRESENTATION,
+            "SelfIssued" => ISSUANCEPAYLOAD_SELFISSUED,
+            "Multiple" => ISSUANCEPAYLOAD_MULTIPLE,
+            _ => ISSUANCEPAYLOAD // WoodgroveTraining (default)
+        };
+        // Returns the admin-configured manifest URL for the given flow, or null/empty when the flow
+        // should keep the manifest defined in its own request config file (e.g. VerifiedIdentity).
+        private string GetManifestForVcType(string vctype) => vctype switch
+        {
+            "WoodgroveTraining" => AppSettings.CredentialManifest,
+            "Employee" => AppSettings.ManifestEmployee,
+            "IdTokenHint" => AppSettings.ManifestIdTokenHint,
+            "IdToken" => AppSettings.ManifestIdToken,
+            "Presentation" => AppSettings.ManifestPresentation,
+            "SelfIssued" => AppSettings.ManifestSelfIssued,
+            "Multiple" => AppSettings.ManifestMultiple,
+            _ => null // VerifiedIdentity uses the manifest from its own config file
+        };
+
+        // Returns the admin-configured credential type for the given flow, or null/empty when the flow
+        // should keep the type defined in its own request config file (WoodgroveTraining, VerifiedIdentity).
+        private string GetTypeForVcType(string vctype) => vctype switch
+        {
+            "Employee" => AppSettings.TypeEmployee,
+            "IdTokenHint" => AppSettings.TypeIdTokenHint,
+            "IdToken" => AppSettings.TypeIdToken,
+            "Presentation" => AppSettings.TypePresentation,
+            "SelfIssued" => AppSettings.TypeSelfIssued,
+            "Multiple" => AppSettings.TypeMultiple,
+            _ => null
+        };
         protected readonly AppSettingsModel AppSettings;
         protected IMemoryCache _cache;
         protected readonly ILogger<IssuerController> _log;
@@ -60,24 +113,23 @@ namespace AspNetCoreVerifiableCredentials
                 string newpin = null;
 
                 // Select the correct payload file based on the requested VCType
-                string[] allowedTypes = { "WoodgroveTraining", "VerifiedIdentity" };
-                if (!allowedTypes.Contains(vctype))
+                if (!AllowedVcTypes.Contains(vctype))
                 {
                     return BadRequest(new { error = "400", error_description = "Invalid vctype parameter" });
                 }
-                string payloadFile = vctype == "VerifiedIdentity" ? ISSUANCEPAYLOAD_VERIFIEDIDENTITY : ISSUANCEPAYLOAD;
+                string payloadFile = GetPayloadFileForVcType(vctype);
                 string payloadpath = Path.Combine(Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location), payloadFile);
                 _log.LogInformation("IssuanceRequest started. Loading payload from: {PayloadPath}", payloadpath);
                 if (!System.IO.File.Exists(payloadpath))
                 {
                     _log.LogError("Issuance payload file not found: {PayloadPath}", payloadpath);
-                    return BadRequest(new { error = "400", error_description = ISSUANCEPAYLOAD + " not found" });
+                    return BadRequest(new { error = "400", error_description = payloadFile + " not found" });
                 }
                 jsonString = System.IO.File.ReadAllText(payloadpath);
                 if (string.IsNullOrEmpty(jsonString))
                 {
                     _log.LogError("Issuance payload file is empty: {PayloadPath}", payloadpath);
-                    return BadRequest(new { error = "400", error_description = ISSUANCEPAYLOAD + " error reading file" });
+                    return BadRequest(new { error = "400", error_description = payloadFile + " error reading file" });
                 }
                 _log.LogDebug("Issuance payload loaded successfully, length: {Length} bytes", jsonString.Length);
 
@@ -147,12 +199,49 @@ namespace AspNetCoreVerifiableCredentials
                 //for this sample it should be VerifiedCredentialExpert
                 if (payload["manifest"] != null)
                 {
-                    // Only override manifest from appsettings for WoodgroveTraining;
-                    // VerifiedIdentity uses the manifest URL from its own config file
-                    if (vctype == "WoodgroveTraining")
+                    // VerifiedIdentity uses the manifest URL from its own config file and is left untouched.
+                    // All other flows take their manifest from App Service configuration when one is set.
+                    string manifestOverride = GetManifestForVcType(vctype);
+                    if (!string.IsNullOrWhiteSpace(manifestOverride))
                     {
-                        payload["manifest"] = AppSettings.CredentialManifest;
+                        payload["manifest"] = manifestOverride;
                     }
+                }
+
+                // Override the credential type from App Service configuration when provided, so type
+                // names are not hard-coded in the request config templates. WoodgroveTraining and
+                // VerifiedIdentity keep the type from their own config files (helper returns null).
+                string typeOverride = GetTypeForVcType(vctype);
+                if (!string.IsNullOrWhiteSpace(typeOverride))
+                {
+                    payload["type"] = typeOverride;
+                }
+
+                // For the Id token hint flow, take the claim name/value pairs from App Service
+                // configuration when supplied, so claim names are not hard-coded in the template.
+                if (vctype == "IdTokenHint" && AppSettings.IdTokenHintClaims != null && AppSettings.IdTokenHintClaims.Count > 0)
+                {
+                    var idTokenHintClaims = new JObject();
+                    foreach (var claim in AppSettings.IdTokenHintClaims)
+                    {
+                        idTokenHintClaims[claim.Key] = claim.Value;
+                    }
+                    payload["claims"] = idTokenHintClaims;
+                }
+
+                // For the Multiple attestations flow, supply the idTokenHint attestation claims from
+                // App Service configuration when present. The credential's other attestations
+                // (self-issued, presentation, idToken) are collected in the wallet and need no input
+                // here. When MultipleClaims is empty, the claims defined in the request config file
+                // (issuance_request_config_multiple.json) are used as a fallback.
+                if (vctype == "Multiple" && AppSettings.MultipleClaims != null && AppSettings.MultipleClaims.Count > 0)
+                {
+                    var multipleClaims = new JObject();
+                    foreach (var claim in AppSettings.MultipleClaims)
+                    {
+                        multipleClaims[claim.Key] = claim.Value;
+                    }
+                    payload["claims"] = multipleClaims;
                 }
 
                 //here you could change the payload manifest and change the firstname and lastname
