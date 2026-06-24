@@ -46,7 +46,7 @@
         "description": "Your Verified ID Verifier DID (e.g., did:web:yourdomain.com)"
       }
     },
-    "credentialManifest": {
+    "manifestWoodgroveTraining": {
       "type": "string",
       "metadata": {
         "description": "Manifest URL for the WoodgroveTraining issuance flow"
@@ -261,7 +261,7 @@
             },
             {
               "name": "AppSettings__CredentialManifest",
-              "value": "[parameters('credentialManifest')]"
+              "value": "[parameters('manifestWoodgroveTraining')]"
             },
             {
               "name": "AppSettings__ManifestVerifiedIdentity",

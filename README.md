@@ -33,7 +33,7 @@ You will be asked to enter the following parameters during deployment:
 | **Client Secret** | Client secret from your app registration |
 | **Issuer Authority** | Your Verified ID Issuer DID (e.g., `did:web:yourdomain.com`) |
 | **Verifier Authority** | Your Verified ID Verifier DID (e.g., `did:web:yourdomain.com`) |
-| **Credential Manifest** | Manifest URL for the **WoodgroveTraining** flow (create the credential first, then paste its manifest URL here) |
+| **Manifest WoodgroveTraining** | Manifest URL for the **WoodgroveTraining** flow (create the credential first, then paste its manifest URL here) |
 | **Manifest Verified Identity** | Manifest URL for the **VerifiedIdentity** flow (create the credential first, then paste its manifest URL here) |
 | **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details API |
 | **Verification Provider** | Value for the VerifiedIdentity `verificationProvider` claim (e.g., `VIDTeamIDV`). Not entered in the issuance form — sourced from app configuration |
