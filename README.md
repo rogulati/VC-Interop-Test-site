@@ -17,13 +17,44 @@ A web application for testing Microsoft Entra Verified ID credential issuance an
 ![Azure](https://img.shields.io/badge/Azure-Entra%20Verified%20ID-0078D4?style=flat&logo=microsoft-azure)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-## Deploy to Azure
+## Contents
 
-Complete the [setup](#getting-started) before deploying to Azure so that you have all the required parameters.
+- [How it works](#how-it-works)
+- [Setup roadmap](#setup-roadmap) — **start here**
+- [Features](#features)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Getting Started](#getting-started)
+- [Deployment](#deployment)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+
+## How it works
+
+The site demonstrates three Microsoft Entra Verified ID flows you can run end to end:
+
+- **Issue** a credential to a digital wallet via QR code — pick from 8 issuance flows in a dropdown.
+- **Verify** a presented credential and view its claims.
+- **FaceCheck** — optional biometric liveness check during verification.
+
+## Setup roadmap
+
+Do these in order. Finish steps 1–3 **before** deploying so you have every parameter ready.
+
+| Step | What you do |
+|------|-------------|
+| **1. Register an app** | Create an Entra app registration and grant it the Verified ID permission → [details](#app-registration) |
+| **2. Create your credentials** | Create the credential(s) you want to issue in your Verified ID tenant → [details](#2-create-your-credentials) |
+| **3. Collect parameters** | Gather your IDs, secret, DIDs, and manifest URLs → [parameter list](#deployment-parameters) |
+| **4. Deploy to Azure** | One-click deploy with the button below → [details](#deployment) |
+| **5. Set callback URL** | Make your app publicly reachable so the request service can call back → [details](#5-set-a-public-callback-url) |
 
 [![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Frogulati%2FVC-Interop-Test-site%2Fmain%2FARMTemplate%2Ftemplate.json)
 
-You will be asked to enter the following parameters during deployment:
+### Deployment parameters
+
+You will be asked to enter these during deployment:
 
 | Parameter | Description |
 |-----------|-------------|
@@ -42,51 +73,11 @@ You will be asked to enter the following parameters during deployment:
 
 > **Filling the ARM/portal form:** Each parameter above is its own field in the **Deploy to Azure** form — just type the plain value into it (no `key=value` syntax). The template maps each field to the matching `AppSettings__<Name>` app setting automatically. The `key=value` form is only needed when using the Azure CLI or adding settings manually under App Service → **Environment variables**.
 
-#### How to fill `Manifest<Flow>` and `Type<Flow>`
+### 2. Create your credentials
 
-Every issuance flow is driven by a credential you create in **your own** Verified ID tenant. A flow only works once its manifest URL (and, for the configurable flows, its `Type<Flow>` name) is set, and the manifest and type must come from the **same** credential contract.
+Each issuance flow issues a credential you create in **your own** Verified ID tenant (Microsoft Entra admin center → **Verified ID** → **Credentials**). A credential is defined by a **rules definition** (what claims are collected and where they come from) and a **display definition** (how the card looks in the wallet). After you create one, copy its **manifest URL** — and, for the six configurable flows, its **type** — into the matching deployment parameter.
 
-- **WoodgroveTraining** and **VerifiedIdentity** read their manifest from `CredentialManifest` and `ManifestVerifiedIdentity` respectively; their credential **type** is fixed in their request config file, so you only set the manifest.
-- The six configurable flows (Employee, IdTokenHint, IdToken, Presentation, SelfIssued, Multiple) are **opt-in** — each needs **both** its `Manifest<Flow>` URL and `Type<Flow>` name set.
-
-**`Manifest<Flow>` — the contract/manifest URL.** Format:
-
-```
-https://verifiedid.did.msidentity.com/v1.0/tenants/<tenantId>/verifiableCredentials/contracts/<contractId>/manifest
-```
-
-Where to find it:
-1. Azure Portal → **Verified ID** → **Credentials**.
-2. Open the credential you want that flow to issue.
-3. Copy the **Issue credential URL / manifest URL** (it ends in `/manifest`).
-
-**`Type<Flow>` — the credential type name.** This is the credential-specific value in the manifest's `type` array (e.g., `VerifiedEmployee`), **not** the generic `VerifiableCredential`. It must match exactly what the manifest declares or issuance fails. Find it by:
-- Opening the manifest URL in a browser and reading the `type` array, or
-- Using the credential name shown when you created the credential in the Verified ID portal.
-
-**Example pairing for the Employee flow:**
-
-| App Service variable | Example value |
-|----------------------|---------------|
-| `AppSettings__ManifestEmployee` | `https://verifiedid.did.msidentity.com/v1.0/tenants/a492cff2-.../contracts/c5e14c9e-.../manifest` |
-| `AppSettings__TypeEmployee` | `VerifiedEmployee` |
-
-You only need to fill the flows you actually want to test — leave the rest blank.
-
-#### WoodgroveTraining and VerifiedIdentity manifests
-
-These two flows take their manifest from App Service configuration the same way the other flows do — create the credential in your tenant (definitions provided in [`CredentialFiles/`](CredentialFiles)), then paste its manifest URL into the matching setting. Their credential **type** is fixed in their request config file and is not configured separately.
-
-| App Service variable | Flow | Example value |
-|----------------------|------|---------------|
-| `AppSettings__CredentialManifest` | WoodgroveTraining | `https://verifiedid.did.msidentity.com/v1.0/tenants/<tenantId>/verifiableCredentials/contracts/<contractId>/manifest` |
-| `AppSettings__ManifestVerifiedIdentity` | VerifiedIdentity | `https://verifiedid.did.msidentity.com/v1.0/tenants/<tenantId>/verifiableCredentials/contracts/<contractId>/manifest` |
-
-#### How to create the credential definitions (per flow)
-
-Each flow needs a credential created in your Verified ID tenant (the **Create verifiable credentials** screen in the Microsoft Entra admin center). A credential is defined by a **rules definition** (what claims the user must provide and where they come from) and a **display definition** (how the card looks in the wallet). After you create one, copy its **manifest URL** (and, for the configurable flows, its **type**) into the matching settings described above.
-
-This repo ships ready-to-use rules and display definitions you can upload as a starting point in [`CredentialFiles/`](CredentialFiles):
+**Ready-made definitions** you can upload as a starting point, in [`CredentialFiles/`](CredentialFiles):
 
 | Flow | Rules definition | Display definition |
 |------|------------------|--------------------|
@@ -94,15 +85,34 @@ This repo ships ready-to-use rules and display definitions you can upload as a s
 | VerifiedIdentity | [`VerifiedIdentityRulesDefinition.json`](CredentialFiles/VerifiedIdentityRulesDefinition.json) | [`VerifiedIdentityDisplayDefinition.json`](CredentialFiles/VerifiedIdentityDisplayDefinition.json) |
 | IdTokenHint (sample) | [`VerifiedCredentialExpertRulesDefinition.json`](CredentialFiles/VerifiedCredentialExpertRulesDefinition.json) | [`VerifiedCredentialExpertDisplayDefinition.json`](CredentialFiles/VerifiedCredentialExpertDisplayDefinition.json) |
 
-> The claim names in each rules definition must match what this app sends. WoodgroveTraining issues `givenName`, `surname`, `email`, `displayName`; VerifiedIdentity issues the 10 IDV claims plus `verificationProvider`.
+> Claim names in the rules definition must match what this app sends: **WoodgroveTraining** → `givenName`, `surname`, `email`, `displayName`; **VerifiedIdentity** → the 10 IDV claims plus `verificationProvider`.
 
-Start here:
+<details>
+<summary><b>Where to find a flow's manifest URL and type</b></summary>
 
-- **Set up your tenant** — [Quick setup](https://learn.microsoft.com/en-us/entra/verified-id/verifiable-credentials-configure-tenant-quick) or [Advanced setup](https://learn.microsoft.com/en-us/entra/verified-id/verifiable-credentials-configure-tenant)
-- **Customize credentials (author rules + display definitions)** — [Customize your verifiable credentials](https://learn.microsoft.com/en-us/entra/verified-id/credential-design)
-- **Full JSON reference** — [Rules and display definition reference](https://learn.microsoft.com/en-us/entra/verified-id/rules-and-display-definitions-model)
+**Manifest URL** — open the credential in **Verified ID → Credentials** and copy its **Issue credential URL** (it ends in `/manifest`):
 
-Per-flow how-to guides — each row maps to a dropdown option on the Issuer page:
+```
+https://verifiedid.did.msidentity.com/v1.0/tenants/<tenantId>/verifiableCredentials/contracts/<contractId>/manifest
+```
+
+**Type** (configurable flows only) — the credential-specific value in the manifest's `type` array (e.g., `VerifiedEmployee`), **not** the generic `VerifiableCredential`. It must match exactly or issuance fails. Read it from the manifest URL in a browser, or from the credential name in the portal.
+
+Example pairing for the Employee flow:
+
+| App Service variable | Example value |
+|----------------------|---------------|
+| `AppSettings__ManifestEmployee` | `https://verifiedid.did.msidentity.com/v1.0/tenants/<tenantId>/verifiableCredentials/contracts/<contractId>/manifest` |
+| `AppSettings__TypeEmployee` | `VerifiedEmployee` |
+
+WoodgroveTraining and VerifiedIdentity set only the manifest (their type is fixed in the request config). Fill only the flows you want to test — leave the rest blank.
+
+</details>
+
+<details>
+<summary><b>All 8 issuance flows and their how-to guides</b></summary>
+
+Each row maps to a dropdown option on the Issuer page:
 
 | Dropdown flow | `vctype` | Attestation type | Microsoft Learn how-to |
 |---------------|----------|------------------|------------------------|
@@ -117,23 +127,25 @@ Per-flow how-to guides — each row maps to a dropdown option on the Issuer page
 
 > **Employee** is a *managed* credential — its rules are fixed (claims come from the user's Microsoft Entra profile) and you only style the display. All other flows are *custom* credentials where you author both the rules and display JSON. The **Multiple** flow's `idTokenHint` claim names (`given_name`, `family_name`) must match what this app injects via `MultipleClaims`.
 
-All guides are part of the [Microsoft Entra Verified ID documentation](https://learn.microsoft.com/en-us/entra/verified-id/).
+</details>
+
+<details>
+<summary><b>Verified ID setup and reference docs</b></summary>
+
+- **Set up your tenant** — [Quick setup](https://learn.microsoft.com/en-us/entra/verified-id/verifiable-credentials-configure-tenant-quick) or [Advanced setup](https://learn.microsoft.com/en-us/entra/verified-id/verifiable-credentials-configure-tenant)
+- **Customize credentials (author rules + display definitions)** — [Customize your verifiable credentials](https://learn.microsoft.com/en-us/entra/verified-id/credential-design)
+- **Full JSON reference** — [Rules and display definition reference](https://learn.microsoft.com/en-us/entra/verified-id/rules-and-display-definitions-model)
+- **All docs** — [Microsoft Entra Verified ID documentation](https://learn.microsoft.com/en-us/entra/verified-id/)
+
+</details>
+
+### 5. Set a public callback URL
 
 After deployment:
-1. Go to your App Service in Azure Portal
-2. Copy the URL (e.g., `https://your-app-name.azurewebsites.net`)
-3. Set up ngrok or a public callback URL so the VC Request Service can reach your app
 
-## Table of Contents
-
-- [Features](#features)
-- [Architecture](#architecture)
-- [Prerequisites](#prerequisites)
-- [Getting Started](#getting-started)
-- [Deployment](#deployment)
-- [Project Structure](#project-structure)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
+1. Open your App Service in the Azure Portal.
+2. Copy its URL (e.g., `https://your-app-name.azurewebsites.net`).
+3. Use ngrok or the public App Service URL so the VC Request Service can reach your app's callback endpoint.
 
 ## Features
 
