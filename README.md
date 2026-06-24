@@ -33,7 +33,8 @@ You will be asked to enter the following parameters during deployment:
 | **Client Secret** | Client secret from your app registration |
 | **Issuer Authority** | Your Verified ID Issuer DID (e.g., `did:web:yourdomain.com`) |
 | **Verifier Authority** | Your Verified ID Verifier DID (e.g., `did:web:yourdomain.com`) |
-| **Credential Manifest** | URL to your Verifiable Credential manifest (used by the WoodgroveTraining flow) |
+| **Credential Manifest** | Manifest URL for the **WoodgroveTraining** flow |
+| **Manifest Verified Identity** | Manifest URL for the **VerifiedIdentity** flow. Leave blank to use the value baked into `issuance_request_config_verifiedidentity.json` |
 | **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details API |
 | **Verification Provider** | Value for the VerifiedIdentity `verificationProvider` claim (e.g., `VIDTeamIDV`). Not entered in the issuance form — sourced from app configuration |
 | **Manifest\* / Type\*** | Optional per-flow manifest URL and credential type for the six configurable issuance flows (Employee, IdTokenHint, IdToken, Presentation, SelfIssued, Multiple). Both `Manifest<Flow>` and `Type<Flow>` must be set for a flow to work |
@@ -68,6 +69,15 @@ Where to find it:
 | `AppSettings__TypeEmployee` | `VerifiedEmployee` |
 
 You only need to fill the flows you actually want to test — leave the rest blank.
+
+#### Built-in flows: `WoodgroveTraining` and `VerifiedIdentity`
+
+Both ship with working defaults, but each flow's manifest can be overridden from App Service configuration. `WoodgroveTraining` reads its manifest from `CredentialManifest`; `VerifiedIdentity` reads its manifest from `ManifestVerifiedIdentity` and, when that is blank, falls back to the manifest baked into `issuance_request_config_verifiedidentity.json`. Their credential **type** is always taken from their own request config file and is not overridden.
+
+| App Service variable | Flow | Example value |
+|----------------------|------|---------------|
+| `AppSettings__CredentialManifest` | WoodgroveTraining | `https://verifiedid.did.msidentity.com/v1.0/tenants/a492cff2-d733-4057-95a5-a71fc3695bc8/verifiableCredentials/contracts/a749fd96-2a43-79f1-b396-f4654dee9263/manifest` |
+| `AppSettings__ManifestVerifiedIdentity` | VerifiedIdentity | `https://verifiedid.did.msidentity.com/v1.0/tenants/a492cff2-d733-4057-95a5-a71fc3695bc8/verifiableCredentials/contracts/c5e14c9e-4b69-c200-2e51-5d09998ff664/manifest` |
 
 #### How to create the credential definitions (per flow)
 

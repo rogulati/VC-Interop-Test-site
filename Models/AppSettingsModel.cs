@@ -30,7 +30,17 @@ namespace AspNetCoreVerifiableCredentials
         /// </summary>
         public string VCServiceScope { get; set; }
 
+        /// <summary>
+        /// Credential manifest URL for the WoodgroveTraining issuance flow.
+        /// </summary>
         public string CredentialManifest { get; set; }
+
+        /// <summary>
+        /// Credential manifest URL for the VerifiedIdentity issuance flow. Set by the administrator via
+        /// App Service configuration / appsettings.json. When empty, the manifest defined inside
+        /// issuance_request_config_verifiedidentity.json is used.
+        /// </summary>
+        public string ManifestVerifiedIdentity { get; set; }
 
         /// <summary>
         /// Per-flow credential manifest URLs for the issuance test cases. These are set by the

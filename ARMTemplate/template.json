@@ -49,7 +49,14 @@
     "credentialManifest": {
       "type": "string",
       "metadata": {
-        "description": "URL to your Verifiable Credential manifest"
+        "description": "Manifest URL for the WoodgroveTraining issuance flow"
+      }
+    },
+    "manifestVerifiedIdentity": {
+      "type": "string",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Manifest URL for the VerifiedIdentity issuance flow (leave blank to use the value baked into issuance_request_config_verifiedidentity.json)"
       }
     },
     "cpAuthorityId": {
@@ -255,6 +262,10 @@
             {
               "name": "AppSettings__CredentialManifest",
               "value": "[parameters('credentialManifest')]"
+            },
+            {
+              "name": "AppSettings__ManifestVerifiedIdentity",
+              "value": "[parameters('manifestVerifiedIdentity')]"
             },
             {
               "name": "AppSettings__CPAuthorityId",

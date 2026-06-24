@@ -55,18 +55,19 @@ namespace AspNetCoreVerifiableCredentials
             "Multiple" => ISSUANCEPAYLOAD_MULTIPLE,
             _ => ISSUANCEPAYLOAD // WoodgroveTraining (default)
         };
-        // Returns the admin-configured manifest URL for the given flow, or null/empty when the flow
-        // should keep the manifest defined in its own request config file (e.g. VerifiedIdentity).
+        // Returns the admin-configured manifest URL for the given flow, or null/empty when no override
+        // is configured, in which case the manifest defined in the flow's own request config file is used.
         private string GetManifestForVcType(string vctype) => vctype switch
         {
             "WoodgroveTraining" => AppSettings.CredentialManifest,
+            "VerifiedIdentity" => AppSettings.ManifestVerifiedIdentity,
             "Employee" => AppSettings.ManifestEmployee,
             "IdTokenHint" => AppSettings.ManifestIdTokenHint,
             "IdToken" => AppSettings.ManifestIdToken,
             "Presentation" => AppSettings.ManifestPresentation,
             "SelfIssued" => AppSettings.ManifestSelfIssued,
             "Multiple" => AppSettings.ManifestMultiple,
-            _ => null // VerifiedIdentity uses the manifest from its own config file
+            _ => null
         };
 
         // Returns the admin-configured credential type for the given flow, or null/empty when the flow
@@ -199,8 +200,8 @@ namespace AspNetCoreVerifiableCredentials
                 //for this sample it should be VerifiedCredentialExpert
                 if (payload["manifest"] != null)
                 {
-                    // VerifiedIdentity uses the manifest URL from its own config file and is left untouched.
-                    // All other flows take their manifest from App Service configuration when one is set.
+                    // Each flow takes its manifest from App Service configuration when one is set;
+                    // otherwise the manifest defined in the flow's own request config file is used.
                     string manifestOverride = GetManifestForVcType(vctype);
                     if (!string.IsNullOrWhiteSpace(manifestOverride))
                     {
