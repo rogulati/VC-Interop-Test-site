@@ -88,3 +88,6 @@ local.settings.json
 generate_excel.py
 manifest_claims.txt
 publish.zip
+
+# Local-only working files (kept locally, excluded from the repo)
+IDV_Claims_Comparison.xlsx
