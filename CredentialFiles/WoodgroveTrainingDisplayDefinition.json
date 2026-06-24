@@ -1,0 +1,40 @@
+{
+  "locale": "en-US",
+  "card": {
+    "backgroundColor": "#2E8B57",
+    "issuedBy": "Woodgrove",
+    "textColor": "#FFFFFF",
+    "title": "Woodgrove Training",
+    "logo": {
+      "description": "Woodgrove logo",
+      "uri": "https://didcustomerplayground.blob.core.windows.net/public/VerifiedCredentialExpert_icon.png"
+    },
+    "description": "Training credential issued to Woodgrove employees who completed the course."
+  },
+  "consent": {
+    "title": "Do you want to get your Woodgrove Training credential?",
+    "instructions": "Sign in with your account to get your card."
+  },
+  "claims": [
+    {
+      "claim": "vc.credentialSubject.givenName",
+      "label": "Given name",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.surname",
+      "label": "Surname",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.email",
+      "label": "Email",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.displayName",
+      "label": "Display name",
+      "type": "String"
+    }
+  ]
+}

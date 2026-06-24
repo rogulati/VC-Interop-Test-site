@@ -1,0 +1,41 @@
+{
+  "attestations": {
+    "idTokenHints": [
+      {
+        "mapping": [
+          {
+            "outputClaim": "givenName",
+            "required": true,
+            "inputClaim": "$.givenName",
+            "indexed": false
+          },
+          {
+            "outputClaim": "surname",
+            "required": true,
+            "inputClaim": "$.surname",
+            "indexed": true
+          },
+          {
+            "outputClaim": "email",
+            "required": false,
+            "inputClaim": "$.email",
+            "indexed": false
+          },
+          {
+            "outputClaim": "displayName",
+            "required": false,
+            "inputClaim": "$.displayName",
+            "indexed": false
+          }
+        ],
+        "required": true
+      }
+    ]
+  },
+  "validityInterval": 2592000,
+  "vc": {
+    "type": [
+      "WoodgroveTraining"
+    ]
+  }
+}

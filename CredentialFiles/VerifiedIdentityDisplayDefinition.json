@@ -1,0 +1,70 @@
+{
+  "locale": "en-US",
+  "card": {
+    "backgroundColor": "#000000",
+    "issuedBy": "Verified Identity",
+    "textColor": "#FFFFFF",
+    "title": "Verified Identity",
+    "logo": {
+      "description": "Verified Identity logo",
+      "uri": "https://didcustomerplayground.blob.core.windows.net/public/VerifiedCredentialExpert_icon.png"
+    },
+    "description": "A verified identity credential issued after an identity verification (IDV) check."
+  },
+  "consent": {
+    "title": "Do you want to get your Verified Identity credential?",
+    "instructions": "Sign in to get your card."
+  },
+  "claims": [
+    {
+      "claim": "vc.credentialSubject.firstName",
+      "label": "First name",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.lastName",
+      "label": "Last name",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.gender",
+      "label": "Gender",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.address",
+      "label": "Address",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.nationality",
+      "label": "Nationality",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.documentNumber",
+      "label": "Document number",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.documentCode",
+      "label": "Document code",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.dateOfBirth",
+      "label": "Date of birth",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.dateOfExpiry",
+      "label": "Date of expiry",
+      "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.photo",
+      "label": "Photo",
+      "type": "image/jpg;base64url"
+    }
+  ]
+}

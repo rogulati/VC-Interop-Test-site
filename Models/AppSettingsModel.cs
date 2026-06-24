@@ -37,8 +37,9 @@ namespace AspNetCoreVerifiableCredentials
 
         /// <summary>
         /// Credential manifest URL for the VerifiedIdentity issuance flow. Set by the administrator via
-        /// App Service configuration / appsettings.json. When empty, the manifest defined inside
-        /// issuance_request_config_verifiedidentity.json is used.
+        /// App Service configuration / appsettings.json (AppSettings__ManifestVerifiedIdentity). Like the
+        /// other configurable flows, the VerifiedIdentity credential must be created in the tenant and its
+        /// manifest URL supplied here for issuance to work.
         /// </summary>
         public string ManifestVerifiedIdentity { get; set; }
 

@@ -56,7 +56,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Manifest URL for the VerifiedIdentity issuance flow (leave blank to use the value baked into issuance_request_config_verifiedidentity.json)"
+        "description": "Manifest URL for the VerifiedIdentity issuance flow (create the credential in your tenant, then paste its manifest URL here)"
       }
     },
     "cpAuthorityId": {

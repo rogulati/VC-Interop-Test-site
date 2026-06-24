@@ -1,0 +1,83 @@
+{
+  "attestations": {
+    "idTokenHints": [
+      {
+        "mapping": [
+          {
+            "outputClaim": "firstName",
+            "required": true,
+            "inputClaim": "$.firstName",
+            "indexed": false
+          },
+          {
+            "outputClaim": "lastName",
+            "required": true,
+            "inputClaim": "$.lastName",
+            "indexed": true
+          },
+          {
+            "outputClaim": "gender",
+            "required": false,
+            "inputClaim": "$.gender",
+            "indexed": false
+          },
+          {
+            "outputClaim": "address",
+            "required": false,
+            "inputClaim": "$.address",
+            "indexed": false
+          },
+          {
+            "outputClaim": "nationality",
+            "required": false,
+            "inputClaim": "$.nationality",
+            "indexed": false
+          },
+          {
+            "outputClaim": "documentNumber",
+            "required": false,
+            "inputClaim": "$.documentNumber",
+            "indexed": false
+          },
+          {
+            "outputClaim": "documentCode",
+            "required": false,
+            "inputClaim": "$.documentCode",
+            "indexed": false
+          },
+          {
+            "outputClaim": "dateOfBirth",
+            "required": false,
+            "inputClaim": "$.dateOfBirth",
+            "indexed": false
+          },
+          {
+            "outputClaim": "dateOfExpiry",
+            "required": false,
+            "inputClaim": "$.dateOfExpiry",
+            "indexed": false
+          },
+          {
+            "outputClaim": "photo",
+            "required": false,
+            "inputClaim": "$.photo",
+            "indexed": false
+          },
+          {
+            "outputClaim": "verificationProvider",
+            "required": false,
+            "inputClaim": "$.verificationProvider",
+            "indexed": false
+          }
+        ],
+        "required": true
+      }
+    ]
+  },
+  "validityInterval": 2592000,
+  "vc": {
+    "type": [
+      "VerifiedIdentity"
+    ]
+  }
+}
