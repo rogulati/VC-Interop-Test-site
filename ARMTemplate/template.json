@@ -184,6 +184,20 @@
       "metadata": {
         "description": "Sample 'family_name' claim value for the idTokenHint portion of the Multiple attestations flow"
       }
+    },
+    "repoUrl": {
+      "type": "string",
+      "defaultValue": "https://github.com/rogulati/VC-Interop-Test-site",
+      "metadata": {
+        "description": "Public GitHub repository to deploy the app code from"
+      }
+    },
+    "repoBranch": {
+      "type": "string",
+      "defaultValue": "main",
+      "metadata": {
+        "description": "Branch of the repository to deploy"
+      }
     }
   },
   "variables": {
@@ -341,7 +355,22 @@
             }
           ]
         }
-      }
+      },
+      "resources": [
+        {
+          "type": "sourcecontrols",
+          "apiVersion": "2022-09-01",
+          "name": "web",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', variables('webSiteName'))]"
+          ],
+          "properties": {
+            "repoUrl": "[parameters('repoUrl')]",
+            "branch": "[parameters('repoBranch')]",
+            "isManualIntegration": true
+          }
+        }
+      ]
     }
   ],
   "outputs": {
