@@ -363,13 +363,27 @@
                         });
                 });
 
+                // Downscale a drawable source (video or image) to a JPEG data URL whose longest
+                // side is at most maxDim pixels. Mobile cameras capture very large frames; without
+                // this, the base64url photo claim can exceed Entra Verified ID's issuance request
+                // size limit and the service returns a generic internalServerError.
+                function toScaledJpegDataUrl(source, srcWidth, srcHeight, maxDim, quality) {
+                    var w = srcWidth, h = srcHeight;
+                    if (w > maxDim || h > maxDim) {
+                        var scale = Math.min(maxDim / w, maxDim / h);
+                        w = Math.round(w * scale);
+                        h = Math.round(h * scale);
+                    }
+                    var cvs = document.createElement('canvas');
+                    cvs.width = w;
+                    cvs.height = h;
+                    cvs.getContext('2d').drawImage(source, 0, 0, w, h);
+                    return cvs.toDataURL('image/jpeg', quality);
+                }
+
                 document.getElementById('btnCapture').addEventListener('click', function() {
                     var video = document.getElementById('selfieVideo');
-                    var canvas = document.getElementById('selfieCanvas');
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.getContext('2d').drawImage(video, 0, 0);
-                    var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                    var dataUrl = toScaledJpegDataUrl(video, video.videoWidth, video.videoHeight, 512, 0.7);
                     photoBase64 = dataUrl.split(',')[1]; // strip "data:image/jpeg;base64,"
                     showPhotoPreview(dataUrl);
                     stopSelfieStream();
@@ -398,11 +412,7 @@
                     // Convert uploaded image to JPEG via canvas for consistent format
                     var img = new Image();
                     img.onload = function() {
-                        var cvs = document.createElement('canvas');
-                        cvs.width = img.width;
-                        cvs.height = img.height;
-                        cvs.getContext('2d').drawImage(img, 0, 0);
-                        var jpegDataUrl = cvs.toDataURL('image/jpeg', 0.85);
+                        var jpegDataUrl = toScaledJpegDataUrl(img, img.width, img.height, 512, 0.7);
                         photoBase64 = jpegDataUrl.split(',')[1];
                         showPhotoPreview(jpegDataUrl);
                     };
