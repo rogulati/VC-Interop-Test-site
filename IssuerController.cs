@@ -246,6 +246,7 @@ namespace AspNetCoreVerifiableCredentials
                 }
 
                 //here you could change the payload manifest and change the firstname and lastname
+                string issuanceTokenId = null;
                 if (vctype == "WoodgroveTraining")
                 {
                     payload["claims"]["givenName"] = "Megan";
@@ -283,10 +284,10 @@ namespace AspNetCoreVerifiableCredentials
                     payload["claims"]["verificationProvider"] = AppSettings.VerificationProvider;
 
                     // Pass issuanceTokenId at root level if provided
-                    var token = userClaims?["token"]?.ToString();
-                    if (!string.IsNullOrEmpty(token))
+                    issuanceTokenId = userClaims?["token"]?.ToString();
+                    if (!string.IsNullOrEmpty(issuanceTokenId))
                     {
-                        payload["token"] = token;
+                        payload["token"] = issuanceTokenId;
                     }
                 }
                 
@@ -312,6 +313,54 @@ namespace AspNetCoreVerifiableCredentials
                     var client = _httpClientFactory.CreateClient();
                     var defaultRequestHeaders = client.DefaultRequestHeaders;
                     defaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken.token);
+
+                    if (vctype == "VerifiedIdentity" && !string.IsNullOrEmpty(issuanceTokenId))
+                    {
+                        if (string.IsNullOrWhiteSpace(AppSettings.IssuerAuthority))
+                        {
+                            return BadRequest(new { error = "400", error_description = "IssuerAuthority not configured" });
+                        }
+
+                        string validationUrl = AppSettings.Endpoint
+                            + "verifiableCredentials/authorities/"
+                            + Uri.EscapeDataString(AppSettings.IssuerAuthority)
+                            + "/issuanceToken/"
+                            + Uri.EscapeDataString(issuanceTokenId)
+                            + "/completeValidation";
+                        string validationPayload = JsonConvert.SerializeObject(new { validationPassed = true });
+
+                        _log.LogInformation("Completing validation for VerifiedIdentity issuance token");
+                        HttpResponseMessage validationResult = await client.PostAsync(
+                            validationUrl,
+                            new StringContent(validationPayload, Encoding.UTF8, "application/json"));
+                        string validationResponse = await validationResult.Content.ReadAsStringAsync();
+
+                        if (!validationResult.IsSuccessStatusCode)
+                        {
+                            _log.LogError(
+                                "Issuance token validation failed. Status: {StatusCode}, Response: {Response}",
+                                validationResult.StatusCode,
+                                validationResponse);
+                            return BadRequest(new
+                            {
+                                error = ((int)validationResult.StatusCode).ToString(),
+                                error_description = "Issuance token validation failed: " + validationResponse
+                            });
+                        }
+
+                        JObject validationResultPayload = JObject.Parse(validationResponse);
+                        if (validationResultPayload["validationPassed"]?.Value<bool>() != true)
+                        {
+                            _log.LogError("Issuance token validation did not return validationPassed=true");
+                            return BadRequest(new
+                            {
+                                error = "400",
+                                error_description = "Issuance token validation was not accepted"
+                            });
+                        }
+
+                        _log.LogInformation("Issuance token validation completed successfully");
+                    }
 
                     HttpResponseMessage res = await client.PostAsync(AppSettings.Endpoint + "verifiableCredentials/createIssuanceRequest", new StringContent(jsonString, Encoding.UTF8, "application/json"));
                     response = await res.Content.ReadAsStringAsync();
