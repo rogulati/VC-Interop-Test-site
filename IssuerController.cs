@@ -349,15 +349,33 @@ namespace AspNetCoreVerifiableCredentials
                             });
                         }
 
-                        JObject validationResultPayload = JObject.Parse(validationResponse);
-                        if (validationResultPayload["validationPassed"]?.Value<bool>() != true)
+                        if (!string.IsNullOrWhiteSpace(validationResponse))
                         {
-                            _log.LogError("Issuance token validation did not return validationPassed=true");
-                            return BadRequest(new
+                            JObject validationResultPayload;
+                            try
                             {
-                                error = "400",
-                                error_description = "Issuance token validation was not accepted"
-                            });
+                                validationResultPayload = JObject.Parse(validationResponse);
+                            }
+                            catch (JsonReaderException ex)
+                            {
+                                _log.LogError(ex, "Issuance token validation returned a non-JSON success response");
+                                return BadRequest(new
+                                {
+                                    error = "400",
+                                    error_description = "Issuance token validation returned an unexpected response"
+                                });
+                            }
+
+                            JToken validationPassedToken = validationResultPayload["validationPassed"];
+                            if (validationPassedToken != null && validationPassedToken.Value<bool>() != true)
+                            {
+                                _log.LogError("Issuance token validation returned validationPassed=false");
+                                return BadRequest(new
+                                {
+                                    error = "400",
+                                    error_description = "Issuance token validation was not accepted"
+                                });
+                            }
                         }
 
                         validationPassed = true;
