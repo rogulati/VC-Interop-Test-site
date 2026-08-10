@@ -229,6 +229,9 @@
                 </p>
             </div>
             <a id="deeplink" style="display: none;margin-top: 10px;">Tap to open Authenticator on mobile</a>
+            <div id="validationSuccess" class="text-success fw-semibold mb-2" role="status" style="display:none;">
+                <i class="bi bi-check-circle-fill me-1" aria-hidden="true"></i>Details validated
+            </div>
             <div id="qrcode" style="text-align: center"></div>
             <div id="pinCodeText" style="display: none"></div>
 
@@ -338,6 +341,7 @@
                     qrEl.innerHTML = '';
                     qrEl.style.display = '';
                     document.getElementById('qrText').style.display = 'none';
+                    document.getElementById('validationSuccess').style.display = 'none';
                     document.getElementById('message-wrapper').style.display = 'none';
                     document.getElementById('message').innerHTML = '';
                     document.getElementById('payload').innerHTML = '';
@@ -429,6 +433,7 @@
                 // ---- Issuance flow common logic ----
                 function handleIssuanceResponse(message) {
                     respIssuanceReq = JSON.parse(message);
+                    document.getElementById('validationSuccess').style.display = respIssuanceReq.validationPassed === true ? 'block' : 'none';
                     if (/Android/i.test(navigator.userAgent)) {
                         console.log('Android device! Using deep link (' + respIssuanceReq.url + ').');
                         window.location.href = respIssuanceReq.url;

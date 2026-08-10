@@ -154,6 +154,7 @@ After deployment:
 - **VerifiedIdentity Claims Form** - Full claims entry form with 10 core claims covering 5 IDV providers (1Kosmos, IDEMIA, Au10tix, CLEAR, TrueCredential): name, gender, nationality, document details, dates, address, photo
 - **Photo Capture** - Take a selfie via browser camera or upload a photo file; images are converted to JPEG and sent as `UrlEncode(Base64Encode(JPEG))`
 - **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
+- **Issuance Token Validation** - For VerifiedIdentity requests with a token, calls `completeValidation` before creating the issuance request and shows **Details validated** in green above the QR code after validation succeeds
 - **Token Details Display** - Fetches and displays issuance token metadata (name, logo, tenant, offering) from the Verified ID beta API
 - **Credential Verification** - Verify presented credentials and display claims in a tabular format
 - **Revocation Toggle** - An **Allow Revoked** checkbox on the Verifier page (default off). When off, revoked credentials are rejected (`allowRevoked: false`); when on, revoked credentials are accepted (`allowRevoked: true`). Lets you test both the accepted and rejected revocation flows
@@ -161,6 +162,7 @@ After deployment:
 - **Photo Claim Rendering** - Automatically decodes and displays base64url-encoded photo claims as images
 - **FaceCheck Confidence Score** - Displays match confidence with color-coded indicators (green/amber/red)
 - **Modern Dashboard UI** - Bootstrap 5 responsive design with gradient styling matching Entra branding
+- **Self-Hosted UI Dependencies** - Bootstrap 5.3.2 and Bootstrap Icons 1.11.1 are served from `wwwroot/lib`, avoiding runtime dependencies on third-party CDNs
 - **Structured Logging** - Enhanced logging throughout controllers for debugging and monitoring
 
 ## Architecture
@@ -185,6 +187,7 @@ After deployment:
 ├─────────────────────────────────────────────────────────────────┤
 │                         APIs                                   │
 │  └── Verified ID Request Service API                           │
+│      ├── completeValidation (VerifiedIdentity token flow)       │
 │      ├── createIssuanceRequest (with optional token field)      │
 │      ├── createPresentationRequest                             │
 │      └── beta/issuanceToken/{tokenId} (token details)          │
@@ -241,6 +244,7 @@ Update `appsettings.json` with your values:
     "IssuerAuthority": "did:web:yourdomain.com",
     "VerifierAuthority": "did:web:yourdomain.com",
     "CredentialManifest": "<your-credential-manifest-url>",
+    "ManifestVerifiedIdentity": "<manifest-url-for-verifiedidentity>",
     "CPAuthorityId": "<your-cp-authority-id>",
     "VerificationProvider": "VIDTeamIDV",
 
@@ -369,6 +373,10 @@ az webapp deployment source config-zip --name vc-interop-test --resource-group r
 3. Sign in and select/create your App Service
 4. Configure settings and click **Publish**
 
+### Existing App Service deployment
+
+This repository's `.github/workflows/deploy.yml` workflow builds, publishes, and deploys the application to the configured Azure App Service whenever a commit is pushed to `main`. Keep deployment credentials in GitHub Actions secrets; do not commit publish profiles or application secrets.
+
 ## Project Structure
 
 ```
@@ -390,6 +398,7 @@ VC-Interop-Test-site/
 │   ├── Issuer.cshtml              # Credential issuance page
 │   └── Verifier.cshtml            # Credential verification page
 ├── wwwroot/
+│   ├── lib/                      # Vendored Bootstrap 5.3.2 and Bootstrap Icons 1.11.1
 │   ├── styles.css                 # Custom CSS (Entra-themed)
 │   └── qrcode.min.js             # QR code generation library
 ├── IssuerController.cs            # Issuance API controller (WoodgroveTraining + VerifiedIdentity)
@@ -410,7 +419,7 @@ VC-Interop-Test-site/
 |-----|----------|
 | `/Issuer` | Default issuance page with WoodgroveTraining selected |
 | `/Issuer/vid` | VerifiedIdentity claims form pre-selected |
-| `/Issuer/vid?tokenId=xxx` | VerifiedIdentity with token details displayed; token passed in issuance request |
+| `/Issuer/vid?tokenId=xxx` | VerifiedIdentity with token details displayed; validation completed before issuance; green confirmation shown above the QR code |
 
 ## Verification Options
 

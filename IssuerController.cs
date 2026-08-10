@@ -296,6 +296,7 @@ namespace AspNetCoreVerifiableCredentials
                 //CALL REST API WITH PAYLOAD
                 HttpStatusCode statusCode = HttpStatusCode.OK;
                 string response = null;
+                bool validationPassed = false;
 
                 try
                 {
@@ -359,6 +360,7 @@ namespace AspNetCoreVerifiableCredentials
                             });
                         }
 
+                        validationPassed = true;
                         _log.LogInformation("Issuance token validation completed successfully");
                     }
 
@@ -373,6 +375,7 @@ namespace AspNetCoreVerifiableCredentials
                         _log.LogInformation("Issuance request created successfully. State: {State}", state);
                         JObject requestConfig = JObject.Parse(response);
                         if (newpin != null) { requestConfig["pin"] = newpin; }
+                        if (validationPassed) { requestConfig["validationPassed"] = true; }
                         requestConfig.Add(new JProperty("id", state));
                         jsonString = JsonConvert.SerializeObject(requestConfig);
 
