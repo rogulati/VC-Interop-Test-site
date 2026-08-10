@@ -335,13 +335,33 @@ namespace AspNetCoreVerifiableCredentials
                             validationUrl,
                             new StringContent(validationPayload, Encoding.UTF8, "application/json"));
                         string validationResponse = await validationResult.Content.ReadAsStringAsync();
+                        string validationMscv = validationResult.Headers.TryGetValues("mscv", out var mscvValues)
+                            || validationResult.Headers.TryGetValues("MS-CV", out mscvValues)
+                            || validationResult.Content.Headers.TryGetValues("mscv", out mscvValues)
+                            || validationResult.Content.Headers.TryGetValues("MS-CV", out mscvValues)
+                                ? string.Join(",", mscvValues)
+                                : "<missing>";
+                        string validationMessage = string.IsNullOrWhiteSpace(validationResponse)
+                            ? "<empty>"
+                            : validationResponse.Length > 2048
+                                ? validationResponse.Substring(0, 2048) + " [truncated]"
+                                : validationResponse;
+
+                        _log.LogInformation(
+                            "POST /completeValidation responded. Status: {StatusCode} ({StatusName}), mscv: {Mscv}, Message: {ResponseMessage}",
+                            (int)validationResult.StatusCode,
+                            validationResult.StatusCode,
+                            validationMscv,
+                            validationMessage);
 
                         if (!validationResult.IsSuccessStatusCode)
                         {
                             _log.LogError(
-                                "Issuance token validation failed. Status: {StatusCode}, Response: {Response}",
+                                "POST /completeValidation failed. Status: {StatusCode} ({StatusName}), mscv: {Mscv}, Message: {ResponseMessage}",
+                                (int)validationResult.StatusCode,
                                 validationResult.StatusCode,
-                                validationResponse);
+                                validationMscv,
+                                validationMessage);
                             return BadRequest(new
                             {
                                 error = ((int)validationResult.StatusCode).ToString(),
