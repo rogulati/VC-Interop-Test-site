@@ -317,14 +317,14 @@ namespace AspNetCoreVerifiableCredentials
 
                     if (vctype == "VerifiedIdentity" && !string.IsNullOrEmpty(issuanceTokenId))
                     {
-                        if (string.IsNullOrWhiteSpace(AppSettings.IssuerAuthority))
+                        if (string.IsNullOrWhiteSpace(AppSettings.CPAuthorityId))
                         {
-                            return BadRequest(new { error = "400", error_description = "IssuerAuthority not configured" });
+                            return BadRequest(new { error = "400", error_description = "CPAuthorityId not configured" });
                         }
 
                         string validationUrl = AppSettings.Endpoint
                             + "verifiableCredentials/authorities/"
-                            + Uri.EscapeDataString(AppSettings.IssuerAuthority)
+                            + Uri.EscapeDataString(AppSettings.CPAuthorityId)
                             + "/issuanceToken/"
                             + Uri.EscapeDataString(issuanceTokenId)
                             + "/completeValidation";

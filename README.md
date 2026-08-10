@@ -66,7 +66,7 @@ You will be asked to enter these during deployment:
 | **Verifier Authority** | Your Verified ID Verifier DID (e.g., `did:web:yourdomain.com`) |
 | **Manifest WoodgroveTraining** | Manifest URL for the **WoodgroveTraining** flow (create the credential first, then paste its manifest URL here) |
 | **Manifest Verified Identity** | Manifest URL for the **VerifiedIdentity** flow (create the credential first, then paste its manifest URL here) |
-| **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details API |
+| **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details and `completeValidation` APIs |
 | **Verification Provider** | Value for the VerifiedIdentity `verificationProvider` claim (e.g., `VIDTeamIDV`). Not entered in the issuance form — sourced from app configuration |
 | **Manifest\* / Type\*** | Optional per-flow manifest URL and credential type for the six configurable issuance flows (Employee, IdTokenHint, IdToken, Presentation, SelfIssued, Multiple). Both `Manifest<Flow>` and `Type<Flow>` must be set for a flow to work |
 | **Id Token Hint Given/Family Name** | Sample `given_name` / `family_name` claim values for the Id token hint attestation flow |
@@ -154,7 +154,7 @@ After deployment:
 - **VerifiedIdentity Claims Form** - Full claims entry form with 10 core claims covering 5 IDV providers (1Kosmos, IDEMIA, Au10tix, CLEAR, TrueCredential): name, gender, nationality, document details, dates, address, photo
 - **Photo Capture** - Take a selfie via browser camera or upload a photo file; images are converted to JPEG and sent as `UrlEncode(Base64Encode(JPEG))`
 - **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
-- **Issuance Token Validation** - For VerifiedIdentity requests with a token, calls `completeValidation` before creating the issuance request and shows **Details validated** in green above the QR code after validation succeeds
+- **Issuance Token Validation** - For VerifiedIdentity requests with a token, calls `completeValidation` with the configured `CPAuthorityId` before creating the issuance request and shows **Details validated** in green above the QR code after validation succeeds
 - **Token Details Display** - Fetches and displays issuance token metadata (name, logo, tenant, offering) from the Verified ID beta API
 - **Credential Verification** - Verify presented credentials and display claims in a tabular format
 - **Revocation Toggle** - An **Allow Revoked** checkbox on the Verifier page (default off). When off, revoked credentials are rejected (`allowRevoked: false`); when on, revoked credentials are accepted (`allowRevoked: true`). Lets you test both the accepted and rejected revocation flows

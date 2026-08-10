@@ -37,7 +37,7 @@
     "issuerAuthority": {
       "type": "string",
       "metadata": {
-        "description": "Your Verified ID Issuer DID (e.g., did:web:yourdomain.com), used to create issuance requests and complete issuance-token validation"
+        "description": "Your Verified ID Issuer DID (e.g., did:web:yourdomain.com), used to create issuance requests"
       }
     },
     "verifierAuthority": {
@@ -63,7 +63,7 @@
       "type": "string",
       "defaultValue": "",
       "metadata": {
-        "description": "Your Verified ID CP Authority ID (GUID) - used for token details API"
+        "description": "Your Verified ID CP Authority ID (GUID) - used for token details and completeValidation APIs"
       }
     },
     "verificationProvider": {
