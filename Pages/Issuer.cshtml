@@ -275,46 +275,35 @@
                                 document.getElementById('tokenDetailsLoading').style.display = 'none';
                                 document.getElementById('tokenDetailsTable').style.display = '';
                                 var tbody = document.getElementById('tokenDetailsBody');
-                                var fields = [
-                                    { label: 'Name', key: 'name' },
-                                    { label: 'Language', key: 'language' },
-                                    { label: 'Offering ID', key: 'offeringId' },
-                                    { label: 'Subscription ID', key: 'subscriptionId' },
-                                    { label: 'Tenant ID', key: 'tenantId' },
-                                    { label: 'Help Link', key: 'helpLink' },
-                                    { label: 'Redirect URI', key: 'redirectUri' }
-                                ];
-                                fields.forEach(function(f) {
-                                    if (data[f.key] !== undefined) {
-                                        var tr = document.createElement('tr');
-                                        var tdLabel = document.createElement('td');
-                                        tdLabel.style.width = '35%';
-                                        tdLabel.style.fontWeight = '600';
-                                        tdLabel.textContent = f.label;
-                                        var tdValue = document.createElement('td');
-                                        tdValue.textContent = data[f.key] || '—';
-                                        tdValue.style.wordBreak = 'break-all';
-                                        tr.appendChild(tdLabel);
-                                        tr.appendChild(tdValue);
-                                        tbody.appendChild(tr);
-                                    }
-                                });
-                                // Show logo if available
-                                if (data.logoUrl) {
+                                Object.keys(data).forEach(function(key) {
                                     var tr = document.createElement('tr');
                                     var tdLabel = document.createElement('td');
+                                    tdLabel.style.width = '35%';
                                     tdLabel.style.fontWeight = '600';
-                                    tdLabel.textContent = 'Logo';
+                                    tdLabel.textContent = key
+                                        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                                        .replace(/^./, function(firstCharacter) { return firstCharacter.toUpperCase(); })
+                                        .replace(/\bId\b/g, 'ID')
+                                        .replace(/\bUri\b/g, 'URI')
+                                        .replace(/\bUrl\b/g, 'URL');
                                     var tdValue = document.createElement('td');
-                                    var img = document.createElement('img');
-                                    img.src = data.logoUrl;
-                                    img.alt = 'Logo';
-                                    img.style.maxHeight = '40px';
-                                    tdValue.appendChild(img);
+                                    var value = data[key];
+                                    if (key === 'logoUrl' && value) {
+                                        var img = document.createElement('img');
+                                        img.src = value;
+                                        img.alt = 'Logo';
+                                        img.style.maxHeight = '40px';
+                                        tdValue.appendChild(img);
+                                    } else {
+                                        tdValue.textContent = value === undefined || value === null || value === ''
+                                            ? '—'
+                                            : typeof value === 'object' ? JSON.stringify(value) : String(value);
+                                    }
+                                    tdValue.style.wordBreak = 'break-all';
                                     tr.appendChild(tdLabel);
                                     tr.appendChild(tdValue);
-                                    tbody.insertBefore(tr, tbody.firstChild.nextSibling);
-                                }
+                                    tbody.appendChild(tr);
+                                });
                             })
                             .catch(function(err) {
                                 document.getElementById('tokenDetailsLoading').style.display = 'none';

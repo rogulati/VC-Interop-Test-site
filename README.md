@@ -155,7 +155,7 @@ After deployment:
 - **Photo Capture** - Take a selfie via browser camera or upload a photo file; images are converted to JPEG and sent as `UrlEncode(Base64Encode(JPEG))`
 - **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
 - **Issuance Token Validation** - For VerifiedIdentity requests with a token, calls `completeValidation` with the configured `CPAuthorityId` before creating the issuance request and shows **Details validated** in green above the QR code after validation succeeds
-- **Token Details Display** - Fetches and displays issuance token metadata (name, logo, tenant, offering) from the Verified ID beta API
+- **Token Details Display** - Fetches issuance token metadata from the Verified ID beta API and automatically displays every top-level response field, including `userId`; new fields appear without UI changes
 - **Credential Verification** - Verify presented credentials and display claims in a tabular format
 - **Revocation Toggle** - An **Allow Revoked** checkbox on the Verifier page (default off). When off, revoked credentials are rejected (`allowRevoked: false`); when on, revoked credentials are accepted (`allowRevoked: true`). Lets you test both the accepted and rejected revocation flows
 - **FaceCheck Support** - Optional biometric liveness check during presentation using Azure AI Face API
