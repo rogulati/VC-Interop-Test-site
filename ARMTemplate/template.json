@@ -49,7 +49,7 @@
     "manifestWoodgroveTraining": {
       "type": "string",
       "metadata": {
-        "description": "Manifest URL for the WoodgroveTraining issuance flow"
+        "description": "Manifest URL for the WoodgroveTraining issuance flow. Its rules must map the photo claim and its display must declare photo as image/png;base64url."
       }
     },
     "manifestVerifiedIdentity": {
@@ -189,7 +189,7 @@
       "type": "string",
       "defaultValue": "https://github.com/rogulati/VC-Interop-Test-site",
       "metadata": {
-        "description": "Public GitHub repository to deploy the app code from"
+        "description": "Public GitHub repository to deploy the app code from. The selected branch must include wwwroot/Ninja.png for WoodgroveTraining issuance."
       }
     },
     "repoBranch": {

@@ -18,8 +18,10 @@
   "type": "WoodgroveTraining",
   "manifest": "CREDENTIAL URL IN THIS SAMPLE WILL BE COPIED FROM APPSETTINGS.JSON", 
       "claims": {
-      "firstName": "John",
-      "lastName": "Doe",
-      "courseName" : "AI Practitioner"
+      "givenName": "Megan",
+      "surname": "Bowen",
+      "email": "megan@vcinteropdemo.com",
+      "displayName": "Megan Bowen",
+      "photo": "SET FROM wwwroot/Ninja.png"
     }  
 }

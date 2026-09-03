@@ -18,6 +18,7 @@ using System.Net.Http.Headers;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Web;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
 
 namespace AspNetCoreVerifiableCredentials
 {
@@ -86,13 +87,15 @@ namespace AspNetCoreVerifiableCredentials
         protected IMemoryCache _cache;
         protected readonly ILogger<IssuerController> _log;
         private IHttpClientFactory _httpClientFactory;
+        private readonly IWebHostEnvironment _environment;
         private string _apiKey;
-        public IssuerController(IOptions<AppSettingsModel> appSettings, IMemoryCache memoryCache, ILogger<IssuerController> log, IHttpClientFactory httpClientFactory)
+        public IssuerController(IOptions<AppSettingsModel> appSettings, IMemoryCache memoryCache, ILogger<IssuerController> log, IHttpClientFactory httpClientFactory, IWebHostEnvironment environment)
         {
             this.AppSettings = appSettings.Value;
             _cache = memoryCache;
             _log = log;
             _httpClientFactory = httpClientFactory;
+            _environment = environment;
             _apiKey = System.Environment.GetEnvironmentVariable("API-KEY");
         }
 
@@ -253,6 +256,19 @@ namespace AspNetCoreVerifiableCredentials
                     payload["claims"]["surname"] = "Bowen";
                     payload["claims"]["email"] = "megan@vcinteropdemo.com";
                     payload["claims"]["displayName"] = "Megan Bowen";
+
+                    string photoPath = Path.Combine(_environment.WebRootPath, "Ninja.png");
+                    if (!System.IO.File.Exists(photoPath))
+                    {
+                        _log.LogError("WoodgroveTraining photo not found: {PhotoPath}", photoPath);
+                        return BadRequest(new { error = "400", error_description = "WoodgroveTraining photo not found" });
+                    }
+
+                    string photoBase64Url = Convert.ToBase64String(System.IO.File.ReadAllBytes(photoPath))
+                        .TrimEnd('=')
+                        .Replace('+', '-')
+                        .Replace('/', '_');
+                    payload["claims"]["photo"] = photoBase64Url;
                 }
                 else if (vctype == "VerifiedIdentity")
                 {

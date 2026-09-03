@@ -26,6 +26,12 @@
             "required": false,
             "inputClaim": "$.displayName",
             "indexed": false
+          },
+          {
+            "outputClaim": "photo",
+            "required": false,
+            "inputClaim": "$.photo",
+            "indexed": false
           }
         ],
         "required": true

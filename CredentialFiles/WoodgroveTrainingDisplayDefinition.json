@@ -35,6 +35,11 @@
       "claim": "vc.credentialSubject.displayName",
       "label": "Display name",
       "type": "String"
+    },
+    {
+      "claim": "vc.credentialSubject.photo",
+      "label": "Photo",
+      "type": "image/png;base64url"
     }
   ]
 }

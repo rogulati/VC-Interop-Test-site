@@ -64,7 +64,7 @@ You will be asked to enter these during deployment:
 | **Client Secret** | Client secret from your app registration |
 | **Issuer Authority** | Your Verified ID Issuer DID (e.g., `did:web:yourdomain.com`) |
 | **Verifier Authority** | Your Verified ID Verifier DID (e.g., `did:web:yourdomain.com`) |
-| **Manifest WoodgroveTraining** | Manifest URL for the **WoodgroveTraining** flow (create the credential first, then paste its manifest URL here) |
+| **Manifest WoodgroveTraining** | Manifest URL for the **WoodgroveTraining** flow. Its rules must map `photo`, and its display definition must declare `photo` as `image/png;base64url` |
 | **Manifest Verified Identity** | Manifest URL for the **VerifiedIdentity** flow (create the credential first, then paste its manifest URL here) |
 | **CP Authority Id** | Your Verified ID CP Authority ID (GUID) — used for token details and `completeValidation` APIs |
 | **Verification Provider** | Value for the VerifiedIdentity `verificationProvider` claim (e.g., `VIDTeamIDV`). Not entered in the issuance form — sourced from app configuration |
@@ -85,7 +85,9 @@ Each issuance flow issues a credential you create in **your own** Verified ID te
 | VerifiedIdentity | [`VerifiedIdentityRulesDefinition.json`](CredentialFiles/VerifiedIdentityRulesDefinition.json) | [`VerifiedIdentityDisplayDefinition.json`](CredentialFiles/VerifiedIdentityDisplayDefinition.json) |
 | IdTokenHint (sample) | [`VerifiedCredentialExpertRulesDefinition.json`](CredentialFiles/VerifiedCredentialExpertRulesDefinition.json) | [`VerifiedCredentialExpertDisplayDefinition.json`](CredentialFiles/VerifiedCredentialExpertDisplayDefinition.json) |
 
-> Claim names in the rules definition must match what this app sends: **WoodgroveTraining** → `givenName`, `surname`, `email`, `displayName`; **VerifiedIdentity** → the 10 IDV claims plus `verificationProvider`.
+> Claim names in the rules definition must match what this app sends: **WoodgroveTraining** → `givenName`, `surname`, `email`, `displayName`, `photo`; **VerifiedIdentity** → the 10 IDV claims plus `verificationProvider`.
+
+The WoodgroveTraining flow uses [`wwwroot/Ninja.png`](wwwroot/Ninja.png) as its fixed `photo` claim. The server reads the PNG for every issuance request and sends its bytes as unpadded base64url. Keep this file in the deployed application, and use `image/png;base64url` for the claim in the credential display definition. To replace the image, overwrite `wwwroot/Ninja.png` with another PNG and redeploy.
 
 <details>
 <summary><b>Where to find a flow's manifest URL and type</b></summary>
@@ -151,6 +153,7 @@ After deployment:
 
 - **Credential Issuance** - Issue Verified ID credentials to a user's digital wallet via QR code
 - **Multiple Credential Types** - Support for WoodgroveTraining, VerifiedIdentity, and six config-driven attestation flows (Directory based - Employee, Id token hint, Id token, Presentation, Self issued, Multiple attestations) via a dropdown selector. Each configurable flow sources its manifest, credential type, and (for Id token hint) claims from App Service configuration
+- **Fixed Woodgrove Photo** - Include `wwwroot/Ninja.png` as an `image/png;base64url` photo claim in every WoodgroveTraining credential
 - **VerifiedIdentity Claims Form** - Full claims entry form with 10 core claims covering 5 IDV providers (1Kosmos, IDEMIA, Au10tix, CLEAR, TrueCredential): name, gender, nationality, document details, dates, address, photo
 - **Photo Capture** - Take a selfie via browser camera or upload a photo file; images are converted to JPEG and sent as `UrlEncode(Base64Encode(JPEG))`
 - **Issuance Token Support** - Pass `?tokenId=xxx` to auto-populate token details and include the token in the issuance request
@@ -315,6 +318,8 @@ After deployment:
 2. Copy the URL (e.g., `https://your-app-name.azurewebsites.net`)
 3. Ensure the callback URL is reachable by the VC Request Service
 
+The ARM template deploys the selected GitHub branch through App Service source control. That branch must contain `wwwroot/Ninja.png`; ASP.NET Core publishes the file with the other static assets. If the file is missing, WoodgroveTraining issuance returns `WoodgroveTraining photo not found`.
+
 ### Option 2: Deploy using Azure CLI
 
 ```bash
@@ -388,7 +393,11 @@ VC-Interop-Test-site/
 │   └── Cleanup.ps1                # Cleanup script
 ├── CredentialFiles/
 │   ├── VerifiedCredentialExpertDisplayDefinition.json
-│   └── VerifiedCredentialExpertRulesDefinition.json
+│   ├── VerifiedCredentialExpertRulesDefinition.json
+│   ├── VerifiedIdentityDisplayDefinition.json
+│   ├── VerifiedIdentityRulesDefinition.json
+│   ├── WoodgroveTrainingDisplayDefinition.json  # Declares photo as image/png;base64url
+│   └── WoodgroveTrainingRulesDefinition.json    # Maps the photo idTokenHint claim
 ├── Models/
 │   └── AppSettingsModel.cs        # Configuration model
 ├── Pages/
@@ -399,6 +408,7 @@ VC-Interop-Test-site/
 │   └── Verifier.cshtml            # Credential verification page
 ├── wwwroot/
 │   ├── lib/                      # Vendored Bootstrap 5.3.2 and Bootstrap Icons 1.11.1
+│   ├── Ninja.png                 # Fixed WoodgroveTraining photo claim
 │   ├── styles.css                 # Custom CSS (Entra-themed)
 │   └── qrcode.min.js             # QR code generation library
 ├── IssuerController.cs            # Issuance API controller (WoodgroveTraining + VerifiedIdentity)
